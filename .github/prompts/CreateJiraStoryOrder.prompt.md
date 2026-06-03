@@ -1,0 +1,2 @@
+
+For create-jira-stories tasks, load and follow references/create-jira-stories-from-md.prompt.md, then create Jira Stories from Requirements/BDCSPM-74950/BDCSPM-74950-Epic_1.md under ParentEpic=BDCSPM-74950 on CloudId=https://eaton-corp.atlassian.net, preserving story order, skipping duplicates by summary, mapping Description/AC/DoR exactly per skill, and return Created/Skipped/Failed with issue keys and URLs.

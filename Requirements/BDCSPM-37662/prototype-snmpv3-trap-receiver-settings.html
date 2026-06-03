@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDCSPM-37662 | SNMPv3 Trap Receiver Settings Prototype</title>
+<style>
+:root {
+  --header-start: #0057B8;
+  --header-end: #003C7E;
+  --sidebar-bg: #1A2138;
+  --sidebar-hover: rgba(255,255,255,0.06);
+  --sidebar-active: rgba(0,87,184,0.28);
+  --sidebar-text: #B8C0CF;
+  --sidebar-text-active: #FFFFFF;
+  --page-bg: #F4F5F7;
+  --panel-bg: #FFFFFF;
+  --panel-border: #DDE1E6;
+  --panel-header: #F0F2F5;
+  --text-main: #26313D;
+  --text-muted: #6C7886;
+  --line: #E6E9ED;
+  --blue: #0057B8;
+  --blue-soft: #E7F1FF;
+  --green: #2E7D32;
+  --green-soft: #E8F5E9;
+  --orange: #E07A00;
+  --orange-soft: #FFF3E0;
+  --red: #C62828;
+  --red-soft: #FCE8E8;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-heavy: 0 12px 36px rgba(0,0,0,0.22);
+  --radius: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--page-bg);
+  color: var(--text-main);
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+}
+
+body {
+  min-width: 1024px;
+}
+
+button, input, select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  display: grid;
+  grid-template-columns: 220px 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 0 18px;
+  background: linear-gradient(135deg, var(--header-start), var(--header-end));
+  color: #FFFFFF;
+  z-index: 120;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.14);
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.brand-eaton {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.brand-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.35);
+}
+
+.brand-brightlayer {
+  font-size: 17px;
+  font-weight: 500;
+}
+
+.header-banner {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255,255,255,0.82);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.banner-mark {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #E2C24C;
+  border-radius: 3px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.banner-mark::before {
+  content: '!';
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: #E2C24C;
+  font-weight: 700;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.08);
+}
+
+.header-icon:hover {
+  background: rgba(255,255,255,0.16);
+}
+
+.header-icon[data-count]::after {
+  content: attr(data-count);
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #D74A4A;
+  color: #FFFFFF;
+  font-size: 10px;
+  line-height: 15px;
+  text-align: center;
+}
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  padding-top: 56px;
+}
+
+.sidebar {
+  position: fixed;
+  top: 56px;
+  left: 0;
+  bottom: 0;
+  width: 200px;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.toolbar-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.05);
+  color: #D9E3F3;
+  font-size: 13px;
+}
+
+.toolbar-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.nav-list,
+.subnav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item,
+.subnav-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 13px;
+}
+
+.nav-item:hover,
+.subnav-item:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-text-active);
+}
+
+.nav-item.active {
+  background: var(--sidebar-active);
+  color: var(--sidebar-text-active);
+}
+
+.nav-glyph {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.nav-arrow {
+  margin-left: auto;
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.nav-group.active .subnav-wrap {
+  display: block;
+}
+
+.subnav-wrap {
+  display: none;
+  padding-bottom: 8px;
+}
+
+.subnav-item {
+  padding: 8px 16px 8px 44px;
+  font-size: 12px;
+  color: #9EACC1;
+}
+
+.subnav-item.active {
+  color: #55A8FF;
+  background: rgba(255,255,255,0.04);
+  font-weight: 600;
+}
+
+.content {
+  margin-left: 200px;
+  width: calc(100% - 200px);
+  padding: 18px 18px 28px;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: #ECEFF2;
+  box-shadow: var(--shadow);
+}
+
+.toolbar-icon {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #C7CFD8;
+  border-radius: 4px;
+  background: #F6F8FA;
+  color: #44515F;
+}
+
+.page-toolbar h1 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.ghost-button,
+.primary-button,
+.secondary-button,
+.danger-button {
+  border-radius: 4px;
+  padding: 7px 14px;
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+
+.ghost-button {
+  background: #F5F7F9;
+  border-color: #CDD6DF;
+  color: #465463;
+}
+
+.ghost-button:hover {
+  background: #EBEEF2;
+}
+
+.primary-button {
+  background: var(--blue);
+  color: #FFFFFF;
+}
+
+.primary-button:hover {
+  background: #004A9E;
+}
+
+.primary-button:disabled,
+.secondary-button:disabled,
+.danger-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  background: #EAF0F7;
+  color: var(--blue);
+}
+
+.secondary-button:hover {
+  background: #DCE8F6;
+}
+
+.danger-button {
+  background: #FFFFFF;
+  color: var(--red);
+  border-color: #E4B9B9;
+}
+
+.danger-button:hover {
+  background: #FDEEEE;
+}
+
+.page-block {
+  margin-top: 14px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.block-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--panel-header);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.block-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.block-header h2,
+.block-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.header-subtext {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+}
+
+.badge-blue {
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+
+.badge-green {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.badge-orange {
+  background: var(--orange-soft);
+  color: var(--orange);
+}
+
+.badge-red {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.settings-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.settings-table th,
+.settings-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  font-size: 13px;
+}
+
+.settings-table thead th {
+  font-size: 12px;
+  font-weight: 700;
+  color: #566270;
+  background: #FAFBFC;
+  text-align: left;
+}
+
+.settings-table .filter-row th {
+  background: #FFFFFF;
+  padding-top: 6px;
+  padding-bottom: 10px;
+}
+
+.filter-input,
+.field-input,
+.field-select {
+  width: 100%;
+  min-width: 0;
+  padding: 7px 9px;
+  border-radius: 4px;
+  border: 1px solid #CCD3DB;
+  background: #FFFFFF;
+  color: var(--text-main);
+}
+
+.filter-input::placeholder,
+.field-input::placeholder {
+  color: #8B96A4;
+}
+
+.filter-input:focus,
+.field-input:focus,
+.field-select:focus,
+.toolbar-icon:focus-visible,
+.ghost-button:focus-visible,
+.primary-button:focus-visible,
+.secondary-button:focus-visible,
+.danger-button:focus-visible,
+.nav-item:focus-visible,
+.subnav-item:focus-visible,
+.header-icon:focus-visible,
+.toolbar-btn:focus-visible,
+.tab-button:focus-visible,
+.check-input:focus-visible {
+  outline: 2px solid #4DA3FF;
+  outline-offset: 2px;
+}
+
+.action-link {
+  border: none;
+  background: transparent;
+  color: var(--blue);
+  font-weight: 600;
+  padding: 0;
+}
+
+.action-link:hover {
+  text-decoration: underline;
+}
+
+.settings-row-highlight {
+  background: #FBFDFF;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.info-card {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: #FFFFFF;
+  padding: 14px;
+}
+
+.info-label {
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.info-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.info-note {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.notice-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 16px 16px;
+  padding: 12px 14px;
+  border-left: 4px solid var(--blue);
+  background: var(--blue-soft);
+  border-radius: 0 6px 6px 0;
+  font-size: 13px;
+  color: #264C7E;
+}
+
+.notice-strip strong {
+  color: #173B66;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.tab-button {
+  border: none;
+  background: transparent;
+  color: #63707F;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 10px 10px;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-button.active {
+  color: var(--blue);
+  border-bottom-color: var(--blue);
+}
+
+.tab-panel {
+  display: none;
+  padding: 16px;
+}
+
+.tab-panel.active {
+  display: block;
+}
+
+.feature-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.matrix-table,
+.diagnostic-table,
+.editor-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.matrix-table th,
+.matrix-table td,
+.diagnostic-table th,
+.diagnostic-table td,
+.editor-table th,
+.editor-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+  vertical-align: top;
+  font-size: 13px;
+}
+
+.matrix-table th,
+.diagnostic-table th,
+.editor-table th {
+  background: #FAFBFC;
+  color: #596676;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.matrix-table tbody tr:hover,
+.diagnostic-table tbody tr:hover,
+.editor-table tbody tr:hover {
+  background: #FBFCFD;
+}
+
+.secret-pill {
+  display: inline-block;
+  border-radius: 999px;
+  background: #EEF2F6;
+  color: #5E6A78;
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.runtime-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-stack label {
+  color: #566270;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.field-row-error {
+  color: var(--red);
+  font-size: 11px;
+  line-height: 1.2;
+  min-height: 13px;
+}
+
+.field-input.invalid,
+.field-select.invalid {
+  border-color: var(--red);
+  background: #FFF7F7;
+}
+
+.runtime-result,
+.diagnostic-log {
+  margin-top: 16px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: #FFFFFF;
+}
+
+.runtime-result-body,
+.diagnostic-log-body {
+  padding: 16px;
+}
+
+.result-card {
+  border-radius: var(--radius);
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+}
+
+.result-card.success {
+  background: #F7FFF7;
+  border-color: #CFE8D0;
+}
+
+.result-card.warning {
+  background: #FFF9F1;
+  border-color: #F2D7A9;
+}
+
+.result-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin-top: 10px;
+}
+
+.result-item-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.result-item-value {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.scenario-card {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  padding: 14px;
+  background: #FFFFFF;
+}
+
+.scenario-card h4 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.scenario-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.log-item {
+  display: grid;
+  grid-template-columns: 110px 90px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.log-item:last-child {
+  border-bottom: none;
+}
+
+.log-time {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.log-level {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.level-success {
+  color: var(--green);
+}
+
+.level-warning {
+  color: var(--orange);
+}
+
+.level-info {
+  color: var(--blue);
+}
+
+.page-placeholder {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.placeholder-card {
+  min-height: 140px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  background: #FFFFFF;
+  padding: 16px;
+}
+
+.placeholder-card h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.placeholder-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 21, 28, 0.42);
+  z-index: 240;
+}
+
+.modal-overlay.open {
+  display: flex;
+}
+
+.modal-shell {
+  width: min(1120px, calc(100vw - 80px));
+  max-height: calc(100vh - 96px);
+  overflow: hidden;
+  border-radius: 10px;
+  background: #FFFFFF;
+  box-shadow: var(--shadow-heavy);
+  border: 1px solid #D8DEE5;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.modal-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: #65707D;
+  font-size: 18px;
+}
+
+.modal-close:hover {
+  background: #F3F5F7;
+}
+
+.modal-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #FBFDFF;
+}
+
+.modal-note p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.editor-wrap {
+  max-height: calc(100vh - 230px);
+  overflow: auto;
+}
+
+.editor-table th:first-child,
+.editor-table td:first-child {
+  width: 38px;
+}
+
+.editor-table th:nth-child(2),
+.editor-table td:nth-child(2) {
+  min-width: 180px;
+}
+
+.editor-table th:nth-child(3),
+.editor-table td:nth-child(3),
+.editor-table th:nth-child(5),
+.editor-table td:nth-child(5) {
+  min-width: 130px;
+}
+
+.editor-table th:nth-child(4),
+.editor-table td:nth-child(4),
+.editor-table th:nth-child(6),
+.editor-table td:nth-child(6) {
+  min-width: 170px;
+}
+
+.editor-table th:nth-child(7),
+.editor-table td:nth-child(7) {
+  min-width: 180px;
+}
+
+.check-input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--blue);
+}
+
+.modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  background: #FBFCFD;
+}
+
+.modal-foot p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.modal-foot-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirm-shell {
+  width: min(520px, calc(100vw - 40px));
+  border-radius: 10px;
+  background: #FFFFFF;
+  border: 1px solid #D8DEE5;
+  box-shadow: var(--shadow-heavy);
+}
+
+.confirm-head,
+.confirm-foot {
+  padding: 16px 18px;
+}
+
+.confirm-head {
+  border-bottom: 1px solid var(--line);
+}
+
+.confirm-head h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.confirm-body {
+  padding: 16px 18px;
+}
+
+.confirm-body p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-main);
+  line-height: 1.5;
+}
+
+.summary-box {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  background: #F8FAFC;
+  padding: 10px 12px;
+}
+
+.summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.summary-row:not(:last-child) {
+  border-bottom: 1px solid #E8EDF3;
+}
+
+.summary-label {
+  color: var(--text-muted);
+}
+
+.summary-value {
+  font-weight: 700;
+}
+
+.warning-box {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: var(--radius);
+  border: 1px solid #F0C98A;
+  background: var(--orange-soft);
+  color: #8B5200;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.confirm-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.help-inline {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #CDD5DE;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.help-inline .tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  min-width: 220px;
+  max-width: 260px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #24313F;
+  color: #FFFFFF;
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.22);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.help-inline:hover .tooltip,
+.help-inline:focus-within .tooltip {
+  opacity: 1;
+}
+
+.toast-stack {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 320;
+}
+
+.toast {
+  min-width: 280px;
+  max-width: 360px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #FFFFFF;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.18);
+  animation: toast-in 0.22s ease;
+  font-size: 13px;
+}
+
+.toast.success {
+  background: #2E7D32;
+}
+
+.toast.error {
+  background: #C62828;
+}
+
+.toast.info {
+  background: #1565C0;
+}
+
+@keyframes toast-in {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 1180px) {
+  .info-grid,
+  .scenario-grid,
+  .runtime-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .content {
+    padding: 14px;
+  }
+
+  .page-placeholder {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="brand-block">
+    <span class="brand-eaton">EATON</span>
+    <span class="brand-divider"></span>
+    <span class="brand-brightlayer">Brightlayer</span>
+  </div>
+  <div class="header-banner">
+    <span class="banner-mark" aria-hidden="true"></span>
+    <span>This is a Demo copy of the software licensed for company Eaton. This instance uses sample SNMPv3 receiver data for feature evaluation.</span>
+  </div>
+  <div class="header-actions">
+    <button class="header-icon" data-count="2" title="Notifications">N</button>
+    <button class="header-icon" data-count="3" title="Warnings">W</button>
+    <button class="header-icon" data-count="1" title="Tasks">T</button>
+    <button class="header-icon" title="Search">S</button>
+    <button class="header-icon" title="Help">?</button>
+  </div>
+</header>
+
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-toolbar">
+      <button class="toolbar-btn" title="Launch">+</button>
+      <button class="toolbar-btn" title="Overview">o</button>
+      <button class="toolbar-btn" title="Menu">=</button>
+      <button class="toolbar-btn" title="Favorites">*</button>
+    </div>
+
+    <ul class="nav-list">
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Home</span></button></li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Assets</span><span class="nav-arrow">v</span></button></li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Power</span><span class="nav-arrow">v</span></button></li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Health</span><span class="nav-arrow">v</span></button></li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Automation</span></button></li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Workflows</span></button></li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Insights</span></button></li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Events</span></button></li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Alarms</span></button></li>
+      <li class="nav-group active" id="settingsGroup">
+        <button class="nav-item active" data-group-toggle="settings"><span class="nav-glyph"></span><span>Settings</span><span class="nav-arrow">v</span></button>
+        <div class="subnav-wrap">
+          <ul class="subnav-list">
+            <li><button class="subnav-item" data-page="system">System</button></li>
+            <li><button class="subnav-item" data-page="home">Attributes</button></li>
+            <li><button class="subnav-item" data-page="home">Unit Map</button></li>
+            <li><button class="subnav-item" data-page="home">Port Settings</button></li>
+            <li><button class="subnav-item" data-page="home">Port Types</button></li>
+            <li><button class="subnav-item" data-page="home">Cable Trays</button></li>
+            <li><button class="subnav-item" data-page="home">Probes</button></li>
+            <li><button class="subnav-item" data-page="home">Remote Devices</button></li>
+            <li><button class="subnav-item active" data-page="snmpv3">SNMPv3 Trap Receiver</button></li>
+          </ul>
+        </div>
+      </li>
+      <li><button class="nav-item" data-page="home"><span class="nav-glyph"></span><span>Configuration Studio</span></button></li>
+    </ul>
+  </aside>
+
+  <main class="content">
+    <section class="page" id="page-home">
+      <div class="page-toolbar">
+        <button class="toolbar-icon" title="Back"><</button>
+        <button class="toolbar-icon" title="Menu">=</button>
+        <h1>Home</h1>
+        <div class="toolbar-spacer"></div>
+        <button class="ghost-button" id="homeToastButton">Refresh Demo Data</button>
+      </div>
+
+      <div class="page-placeholder">
+        <article class="placeholder-card">
+          <h3>Operations Overview</h3>
+          <p>Use the Settings module to manage platform-level protocols, system rules, and receiver behavior. This placeholder page proves the sidebar navigation is functional alongside the feature prototype.</p>
+        </article>
+        <article class="placeholder-card">
+          <h3>Event Pipeline</h3>
+          <p>SNMP trap routing feeds the same monitoring backbone used across alarms, events, and workflows. Mixed protocol deployments should continue to flow through unchanged after tuple-based credential validation.</p>
+        </article>
+        <article class="placeholder-card">
+          <h3>Customer Impact</h3>
+          <p>Enterprise customers with M2, MS, and M3 cards can keep a shared user naming policy without forcing field-device renames during phased SNMPv3 security upgrades.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="page" id="page-system">
+      <div class="page-toolbar">
+        <button class="toolbar-icon" title="Back"><</button>
+        <button class="toolbar-icon" title="Menu">=</button>
+        <h1>System Settings</h1>
+        <div class="toolbar-spacer"></div>
+        <button class="ghost-button" id="systemDefaultsButton">Use Defaults</button>
+      </div>
+
+      <div class="page-block">
+        <div class="block-header">
+          <div class="block-header-title">
+            <h2>System</h2>
+            <span class="header-subtext">Current platform rules, scanning options, and protocol settings.</span>
+          </div>
+        </div>
+        <div style="overflow:auto;">
+          <table class="settings-table">
+            <thead>
+              <tr>
+                <th style="width:36%;">Name</th>
+                <th style="width:24%;">Value</th>
+                <th>Description</th>
+              </tr>
+              <tr class="filter-row">
+                <th><input class="filter-input settings-filter" data-context="system" data-field="name" type="text" placeholder="Search..." aria-label="Filter system settings by name"></th>
+                <th><input class="filter-input settings-filter" data-context="system" data-field="value" type="text" placeholder="Search..." aria-label="Filter system settings by value"></th>
+                <th><input class="filter-input settings-filter" data-context="system" data-field="description" type="text" placeholder="Search..." aria-label="Filter system settings by description"></th>
+              </tr>
+            </thead>
+            <tbody id="systemSettingsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="page active" id="page-snmpv3">
+      <div class="page-toolbar">
+        <button class="toolbar-icon" title="Back"><</button>
+        <button class="toolbar-icon" title="Menu">=</button>
+        <h1>System Settings</h1>
+        <div class="toolbar-spacer"></div>
+        <button class="ghost-button" id="featureDefaultsButton">Use Defaults</button>
+      </div>
+
+      <div class="page-block">
+        <div class="block-header">
+          <div class="block-header-title">
+            <h2>System</h2>
+            <span class="badge badge-blue">Feature prototype</span>
+            <span class="header-subtext">SNMPv3 credentials can now share a username when the full protocol tuple is unique.</span>
+          </div>
+          <button class="secondary-button" id="openEditorInline">Open SNMPV3 Trap Receiving Setting</button>
+        </div>
+        <div style="overflow:auto;">
+          <table class="settings-table">
+            <thead>
+              <tr>
+                <th style="width:36%;">Name</th>
+                <th style="width:24%;">Value</th>
+                <th>Description</th>
+              </tr>
+              <tr class="filter-row">
+                <th><input class="filter-input settings-filter" data-context="snmpv3" data-field="name" type="text" placeholder="Search..." aria-label="Filter feature settings by name"></th>
+                <th><input class="filter-input settings-filter" data-context="snmpv3" data-field="value" type="text" placeholder="Search..." aria-label="Filter feature settings by value"></th>
+                <th><input class="filter-input settings-filter" data-context="snmpv3" data-field="description" type="text" placeholder="Search..." aria-label="Filter feature settings by description"></th>
+              </tr>
+            </thead>
+            <tbody id="featureSettingsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="page-block">
+        <div class="info-grid">
+          <div class="info-card">
+            <div class="info-label">Saved tuples</div>
+            <div class="info-value" id="savedTupleCount">0</div>
+            <div class="info-note">Distinct username + auth + privacy combinations</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Shared usernames</div>
+            <div class="info-value" id="sharedUserCount">0</div>
+            <div class="info-note">Usernames reused across supported protocol profiles</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Runtime path</div>
+            <div class="info-value" id="runtimePathLabel">Probe + RDG</div>
+            <div class="info-note">Tuple-qualified matching across supported on-prem architectures</div>
+          </div>
+          <div class="info-card">
+            <div class="info-label">Current status</div>
+            <div class="info-value" id="statusLabel">In Evaluation</div>
+            <div class="info-note">Priority Critical for mixed-card customer deployments</div>
+          </div>
+        </div>
+
+        <div class="notice-strip">
+          <strong>Tuple rule</strong>
+          <span>The editor accepts duplicate usernames only when the authentication protocol and privacy protocol combination differs. Saved secrets remain masked and encrypted after commit.</span>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="SNMPv3 feature tabs">
+          <button class="tab-button active" data-tab="profiles" role="tab" aria-selected="true">Credential Matrix</button>
+          <button class="tab-button" data-tab="runtime" role="tab" aria-selected="false">Runtime Match Preview</button>
+          <button class="tab-button" data-tab="diagnostics" role="tab" aria-selected="false">Diagnostics</button>
+        </div>
+
+        <div class="tab-panel active" id="tab-profiles" role="tabpanel">
+          <div class="feature-actions">
+            <button class="primary-button" id="openEditorProfiles">Manage Receiver Profiles</button>
+            <span class="badge badge-green">Passwords masked after save</span>
+            <span class="badge badge-orange">Supported protocols only</span>
+            <span class="help-inline" tabindex="0">?
+              <span class="tooltip">Users can reuse the same SNMPv3 username when auth and privacy protocol combinations differ. This mirrors the Jira capability scope and keeps field-device usernames stable during staged migrations.</span>
+            </span>
+          </div>
+
+          <div style="overflow:auto; border:1px solid var(--panel-border); border-radius:6px;">
+            <table class="matrix-table">
+              <thead>
+                <tr>
+                  <th>User Name</th>
+                  <th>Auth Protocol</th>
+                  <th>Privacy Protocol</th>
+                  <th>Engine ID</th>
+                  <th>Secret State</th>
+                  <th>Last Updated</th>
+                </tr>
+              </thead>
+              <tbody id="matrixTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-runtime" role="tabpanel">
+          <div class="runtime-grid">
+            <div class="field-stack">
+              <label for="runtimeUsername">Incoming user name</label>
+              <input class="field-input" id="runtimeUsername" type="text" value="TRECK">
+            </div>
+            <div class="field-stack">
+              <label for="runtimeAuth">Auth protocol</label>
+              <select class="field-select" id="runtimeAuth">
+                <option value="MD5">MD5</option>
+                <option value="SHA" selected>SHA</option>
+              </select>
+            </div>
+            <div class="field-stack">
+              <label for="runtimePrivacy">Privacy protocol</label>
+              <select class="field-select" id="runtimePrivacy">
+                <option value="DES">DES</option>
+                <option value="AES" selected>AES</option>
+              </select>
+            </div>
+            <div class="field-stack">
+              <label for="runtimeEngine">Engine ID</label>
+              <input class="field-input" id="runtimeEngine" type="text" value="MS-RDG-02" placeholder="Optional field card or engine reference">
+            </div>
+          </div>
+
+          <div class="feature-actions" style="margin-top:16px; margin-bottom:0;">
+            <button class="primary-button" id="previewMatchButton">Preview Tuple Match</button>
+            <button class="ghost-button" id="clearPreviewButton">Clear Preview</button>
+            <span class="help-inline" tabindex="0">?
+              <span class="tooltip">The preview simulates Probe Server lookup using the exact tuple of user name + auth protocol + privacy protocol. No match means the trap is rejected instead of binding to the wrong credential.</span>
+            </span>
+          </div>
+
+          <div class="runtime-result" aria-live="polite">
+            <div class="block-header">
+              <div class="block-header-title">
+                <h3>Preview Result</h3>
+              </div>
+            </div>
+            <div class="runtime-result-body" id="runtimeResultBody"></div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="tab-diagnostics" role="tabpanel">
+          <div class="scenario-grid">
+            <article class="scenario-card">
+              <span class="badge badge-green">UC-1</span>
+              <h4>Mixed Network Card Deployment</h4>
+              <p>M2 and MS cards can retain the same standardized SNMPv3 username while saving different MD5 or SHA and DES or AES combinations.</p>
+            </article>
+            <article class="scenario-card">
+              <span class="badge badge-blue">UC-2</span>
+              <h4>Incremental Security Upgrade</h4>
+              <p>Customers migrating from MD5 or DES to SHA or AES can run both profiles in parallel while BLSS routes traps deterministically by tuple.</p>
+            </article>
+            <article class="scenario-card">
+              <span class="badge badge-orange">UC-3</span>
+              <h4>Multi-Vendor Environment</h4>
+              <p>Different vendors can keep a common user naming policy even if their supported SNMPv3 combinations differ.</p>
+            </article>
+          </div>
+
+          <div class="diagnostic-log">
+            <div class="block-header">
+              <div class="block-header-title">
+                <h3>Sanitized Runtime Diagnostics</h3>
+                <span class="header-subtext">No plaintext credentials are exposed.</span>
+              </div>
+            </div>
+            <div class="diagnostic-log-body" id="diagnosticLogBody"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-overlay open" id="editorModal" aria-hidden="false">
+  <div class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="editorTitle">
+    <div class="modal-head">
+      <h3 id="editorTitle">SNMPV3 Trap Receiving Setting</h3>
+      <button class="modal-close" id="closeEditorButton" aria-label="Close dialog">x</button>
+    </div>
+    <div class="modal-note">
+      <p>Multiple entries can share the same user name when the authentication protocol and privacy protocol differ. Existing saved passwords are retained if left blank.</p>
+      <div class="modal-actions">
+        <button class="secondary-button" id="newRowButton">New</button>
+        <button class="danger-button" id="deleteRowButton" disabled>Delete</button>
+      </div>
+    </div>
+    <div class="editor-wrap">
+      <table class="editor-table">
+        <thead>
+          <tr>
+            <th><span class="sr-only">Select</span></th>
+            <th>User Name</th>
+            <th>Auth Protocol</th>
+            <th>Password</th>
+            <th>Privacy Protocol</th>
+            <th>Privacy Password</th>
+            <th>Engine ID</th>
+          </tr>
+        </thead>
+        <tbody id="editorTableBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-foot">
+      <p>Passwords remain encrypted at rest and are masked immediately after save. Unsupported or unmatched tuples are rejected during runtime preview.</p>
+      <div class="modal-foot-actions">
+        <button class="ghost-button" id="cancelEditorButton">Cancel</button>
+        <button class="primary-button" id="submitEditorButton">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModal" aria-hidden="true">
+  <div class="confirm-shell" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="confirm-head">
+      <h3 id="confirmTitle">Confirm</h3>
+    </div>
+    <div class="confirm-body">
+      <p id="confirmMessage"></p>
+      <div class="summary-box" id="confirmSummary"></div>
+      <div class="warning-box" id="confirmWarning" hidden></div>
+    </div>
+    <div class="confirm-foot">
+      <button class="ghost-button" id="cancelConfirmButton">Cancel</button>
+      <button class="primary-button" id="confirmActionButton">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var nextId = 4;
+  var state = {
+    currentPage: 'snmpv3',
+    currentTab: 'profiles',
+    settingsFilters: {
+      system: { name: '', value: '', description: '' },
+      snmpv3: { name: '', value: '', description: '' }
+    },
+    savedCredentials: [
+      { id: 1, username: 'TRECK', authProtocol: 'MD5', privacyProtocol: 'DES', engineId: 'M2-RACK-01', updatedAt: '2026-05-07 09:18' },
+      { id: 2, username: 'TRECK', authProtocol: 'SHA', privacyProtocol: 'AES', engineId: 'MS-RDG-02', updatedAt: '2026-05-07 09:22' },
+      { id: 3, username: 'FACILITY-OPS', authProtocol: 'SHA', privacyProtocol: 'AES', engineId: 'M3-EDGE-04', updatedAt: '2026-05-06 18:40' }
+    ],
+    draftRows: [],
+    diagnostics: [
+      { time: '2026-05-07 10:24', level: 'success', message: 'Probe Server matched TRECK / SHA / AES to engine MS-RDG-02.' },
+      { time: '2026-05-07 10:19', level: 'warning', message: 'Tuple TRECK / MD5 / AES rejected because no configured receiver matched the full protocol tuple.' },
+      { time: '2026-05-07 09:58', level: 'info', message: 'Masked credential view loaded for mixed M2 and MS card rollout validation.' }
+    ],
+    runtimeResult: null,
+    confirmAction: null
+  };
+
+  function init() {
+    bindNavigation();
+    bindTabs();
+    bindFilters();
+    bindActions();
+    renderAll();
+    openEditor();
+  }
+
+  function bindNavigation() {
+    var navButtons = document.querySelectorAll('.nav-item[data-page], .subnav-item[data-page]');
+    navButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        switchPage(button.getAttribute('data-page'));
+      });
+    });
+
+    var toggle = document.querySelector('[data-group-toggle="settings"]');
+    toggle.addEventListener('click', function () {
+      document.getElementById('settingsGroup').classList.toggle('active');
+    });
+  }
+
+  function bindTabs() {
+    var tabButtons = document.querySelectorAll('.tab-button');
+    tabButtons.forEach(function (button) {
+      button.addEventListener('click', function () {
+        state.currentTab = button.getAttribute('data-tab');
+        renderTabs();
+      });
+    });
+  }
+
+  function bindFilters() {
+    var filterInputs = document.querySelectorAll('.settings-filter');
+    filterInputs.forEach(function (input) {
+      input.addEventListener('input', function () {
+        var context = input.getAttribute('data-context');
+        var field = input.getAttribute('data-field');
+        state.settingsFilters[context][field] = input.value.toLowerCase();
+        renderSettingsTables();
+      });
+    });
+  }
+
+  function bindActions() {
+    document.getElementById('systemDefaultsButton').addEventListener('click', function () {
+      showToast('System defaults preview refreshed.', 'info');
+    });
+    document.getElementById('featureDefaultsButton').addEventListener('click', function () {
+      showToast('Feature page remains in prototype mode. No defaults were changed.', 'info');
+    });
+    document.getElementById('homeToastButton').addEventListener('click', function () {
+      showToast('Demo home data refreshed.', 'success');
+    });
+
+    document.getElementById('openEditorInline').addEventListener('click', openEditor);
+    document.getElementById('openEditorProfiles').addEventListener('click', openEditor);
+
+    document.getElementById('previewMatchButton').addEventListener('click', previewRuntimeMatch);
+    document.getElementById('clearPreviewButton').addEventListener('click', clearRuntimePreview);
+
+    document.getElementById('newRowButton').addEventListener('click', function () {
+      state.draftRows.push(createDraftRow(false));
+      renderEditor();
+      showToast('New receiver row added.', 'info');
+    });
+
+    document.getElementById('deleteRowButton').addEventListener('click', requestDeleteRows);
+    document.getElementById('closeEditorButton').addEventListener('click', closeEditor);
+    document.getElementById('cancelEditorButton').addEventListener('click', closeEditor);
+    document.getElementById('submitEditorButton').addEventListener('click', requestSaveRows);
+
+    document.getElementById('cancelConfirmButton').addEventListener('click', closeConfirm);
+    document.getElementById('confirmActionButton').addEventListener('click', runConfirmAction);
+
+    document.getElementById('editorModal').addEventListener('click', function (event) {
+      if (event.target === event.currentTarget) {
+        closeEditor();
+      }
+    });
+
+    document.getElementById('confirmModal').addEventListener('click', function (event) {
+      if (event.target === event.currentTarget) {
+        closeConfirm();
+      }
+    });
+
+    document.getElementById('editorTableBody').addEventListener('input', handleEditorInput);
+    document.getElementById('editorTableBody').addEventListener('change', handleEditorInput);
+
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') {
+        if (document.getElementById('confirmModal').classList.contains('open')) {
+          closeConfirm();
+        } else if (document.getElementById('editorModal').classList.contains('open')) {
+          closeEditor();
+        }
+      }
+    });
+  }
+
+  function switchPage(page) {
+    state.currentPage = page;
+    renderPages();
+    if (page !== 'snmpv3') {
+      closeEditor();
+    }
+  }
+
+  function renderAll() {
+    renderPages();
+    renderSettingsTables();
+    renderFeatureSummary();
+    renderMatrix();
+    renderTabs();
+    renderRuntimeResult();
+    renderDiagnostics();
+  }
+
+  function renderPages() {
+    document.querySelectorAll('.page').forEach(function (page) {
+      page.classList.toggle('active', page.id === 'page-' + state.currentPage);
+    });
+
+    document.querySelectorAll('.nav-item[data-page]').forEach(function (button) {
+      button.classList.toggle('active', button.getAttribute('data-page') === state.currentPage && state.currentPage === 'home');
+    });
+
+    document.querySelectorAll('.subnav-item').forEach(function (button) {
+      button.classList.toggle('active', button.getAttribute('data-page') === state.currentPage);
+    });
+
+    var settingsActive = state.currentPage === 'system' || state.currentPage === 'snmpv3';
+    var settingsGroup = document.getElementById('settingsGroup');
+    settingsGroup.classList.toggle('active', settingsActive || settingsGroup.classList.contains('active'));
+    settingsGroup.querySelector('.nav-item').classList.toggle('active', settingsActive);
+  }
+
+  function renderSettingsTables() {
+    renderSettingsTable('system', 'systemSettingsBody');
+    renderSettingsTable('snmpv3', 'featureSettingsBody');
+  }
+
+  function getSettingsRows() {
+    var sharedUsers = getSharedUserCount();
+    return [
+      {
+        name: 'Linux Server Auto Scan',
+        value: 'None',
+        description: 'A machine ID can be overridden if it is different, but any machine that matches the current one will also be removed, regardless of its IP address.'
+      },
+      {
+        name: 'SNMPV3 Trap Receiving Setting',
+        value: state.savedCredentials.length + ' receiver profiles',
+        description: 'Allows duplicate user names when the auth and privacy tuple is unique. Shared usernames currently in use: ' + sharedUsers + '.',
+        highlight: true,
+        actionLabel: 'Manage'
+      },
+      {
+        name: 'Workflow Notification Window',
+        value: '15 minutes',
+        description: 'Controls how long configuration status messages remain visible for operators after successful changes.'
+      },
+      {
+        name: 'Probe Server Runtime Validation',
+        value: 'Tuple based',
+        description: 'Runtime matching uses user name + auth protocol + privacy protocol to keep inbound SNMPv3 trap selection deterministic.'
+      }
+    ];
+  }
+
+  function renderSettingsTable(context, targetId) {
+    var filters = state.settingsFilters[context];
+    var rows = getSettingsRows().filter(function (row) {
+      return row.name.toLowerCase().indexOf(filters.name) !== -1 &&
+        row.value.toLowerCase().indexOf(filters.value) !== -1 &&
+        row.description.toLowerCase().indexOf(filters.description) !== -1;
+    });
+
+    var target = document.getElementById(targetId);
+    if (!rows.length) {
+      target.innerHTML = '<tr><td colspan="3" style="padding:24px; color:#7B8795; text-align:center;">No settings match the active search filters.</td></tr>';
+      return;
+    }
+
+    target.innerHTML = rows.map(function (row) {
+      var action = row.actionLabel
+        ? '<button class="action-link" data-open-editor="true">' + row.actionLabel + '</button>'
+        : '';
+      var rowClass = row.highlight ? ' class="settings-row-highlight"' : '';
+      return '<tr' + rowClass + '>' +
+        '<td>' + row.name + '</td>' +
+        '<td>' + row.value + (action ? '<div style="margin-top:6px;">' + action + '</div>' : '') + '</td>' +
+        '<td>' + row.description + '</td>' +
+      '</tr>';
+    }).join('');
+
+    target.querySelectorAll('[data-open-editor="true"]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        switchPage('snmpv3');
+        openEditor();
+      });
+    });
+  }
+
+  function renderFeatureSummary() {
+    document.getElementById('savedTupleCount').textContent = String(state.savedCredentials.length);
+    document.getElementById('sharedUserCount').textContent = String(getSharedUserCount());
+  }
+
+  function renderMatrix() {
+    var body = document.getElementById('matrixTableBody');
+    body.innerHTML = state.savedCredentials.map(function (credential) {
+      return '<tr>' +
+        '<td>' + credential.username + '</td>' +
+        '<td>' + credential.authProtocol + '</td>' +
+        '<td>' + credential.privacyProtocol + '</td>' +
+        '<td>' + (credential.engineId || 'Not specified') + '</td>' +
+        '<td><span class="secret-pill">Masked and encrypted</span></td>' +
+        '<td>' + credential.updatedAt + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function renderTabs() {
+    document.querySelectorAll('.tab-button').forEach(function (button) {
+      var active = button.getAttribute('data-tab') === state.currentTab;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    document.querySelectorAll('.tab-panel').forEach(function (panel) {
+      panel.classList.toggle('active', panel.id === 'tab-' + state.currentTab);
+    });
+  }
+
+  function renderRuntimeResult() {
+    var target = document.getElementById('runtimeResultBody');
+    if (!state.runtimeResult) {
+      target.innerHTML = '<div class="result-card warning"><p class="result-title">No preview executed</p><p>Run the tuple preview to simulate Probe Server credential selection using the configured SNMPv3 receiver profiles.</p></div>';
+      return;
+    }
+
+    if (state.runtimeResult.match) {
+      target.innerHTML = '<div class="result-card success">' +
+        '<p class="result-title">Matched receiver profile</p>' +
+        '<p>The incoming trap resolves to a single saved tuple. This keeps trap routing deterministic while duplicate user names remain valid across different supported protocol combinations.</p>' +
+        '<div class="result-grid">' +
+          '<div><span class="result-item-label">User Name</span><span class="result-item-value">' + state.runtimeResult.row.username + '</span></div>' +
+          '<div><span class="result-item-label">Auth Protocol</span><span class="result-item-value">' + state.runtimeResult.row.authProtocol + '</span></div>' +
+          '<div><span class="result-item-label">Privacy Protocol</span><span class="result-item-value">' + state.runtimeResult.row.privacyProtocol + '</span></div>' +
+          '<div><span class="result-item-label">Engine ID</span><span class="result-item-value">' + (state.runtimeResult.row.engineId || 'Not specified') + '</span></div>' +
+        '</div>' +
+      '</div>';
+      return;
+    }
+
+    target.innerHTML = '<div class="result-card warning">' +
+      '<p class="result-title">No configured tuple matched</p>' +
+      '<p>BLSS should reject this trap instead of binding it to the wrong credential set. Review the configured tuple matrix or add a new receiver row if this combination is expected.</p>' +
+      '<div class="result-grid">' +
+        '<div><span class="result-item-label">User Name</span><span class="result-item-value">' + escapeHtml(state.runtimeResult.input.username || 'Blank') + '</span></div>' +
+        '<div><span class="result-item-label">Auth Protocol</span><span class="result-item-value">' + escapeHtml(state.runtimeResult.input.authProtocol || 'Blank') + '</span></div>' +
+        '<div><span class="result-item-label">Privacy Protocol</span><span class="result-item-value">' + escapeHtml(state.runtimeResult.input.privacyProtocol || 'Blank') + '</span></div>' +
+        '<div><span class="result-item-label">Runtime action</span><span class="result-item-value">Reject and log sanitized diagnostics</span></div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function renderDiagnostics() {
+    var target = document.getElementById('diagnosticLogBody');
+    if (!state.diagnostics.length) {
+      target.innerHTML = '<div style="color:#7B8795; font-size:13px;">No diagnostics recorded yet.</div>';
+      return;
+    }
+
+    target.innerHTML = state.diagnostics.map(function (entry) {
+      return '<div class="log-item">' +
+        '<div class="log-time">' + entry.time + '</div>' +
+        '<div class="log-level level-' + entry.level + '">' + entry.level + '</div>' +
+        '<div>' + escapeHtml(entry.message) + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function openEditor() {
+    state.draftRows = state.savedCredentials.map(function (credential) {
+      return {
+        id: credential.id,
+        username: credential.username,
+        authProtocol: credential.authProtocol,
+        password: '',
+        privacyProtocol: credential.privacyProtocol,
+        privacyPassword: '',
+        engineId: credential.engineId,
+        selected: false,
+        isExisting: true,
+        errors: {}
+      };
+    });
+    renderEditor();
+    document.getElementById('editorModal').classList.add('open');
+    document.getElementById('editorModal').setAttribute('aria-hidden', 'false');
+  }
+
+  function closeEditor() {
+    document.getElementById('editorModal').classList.remove('open');
+    document.getElementById('editorModal').setAttribute('aria-hidden', 'true');
+  }
+
+  function renderEditor() {
+    var body = document.getElementById('editorTableBody');
+    if (!state.draftRows.length) {
+      body.innerHTML = '<tr><td colspan="7" style="padding:24px; text-align:center; color:#7B8795;">No draft receiver rows remain. Add a new row to continue.</td></tr>';
+      updateDeleteButton();
+      return;
+    }
+
+    body.innerHTML = state.draftRows.map(function (row) {
+      return '<tr>' +
+        '<td><input class="check-input" type="checkbox" data-row-id="' + row.id + '" data-field="selected" ' + (row.selected ? 'checked' : '') + ' aria-label="Select row for deletion"></td>' +
+        renderEditorField(row, 'username', 'text', 'Required', row.username, null) +
+        renderEditorSelect(row, 'authProtocol', ['MD5', 'SHA']) +
+        renderEditorField(row, 'password', 'password', row.isExisting ? 'Retained after save' : 'Required', row.password, row.isExisting ? '' : null) +
+        renderEditorSelect(row, 'privacyProtocol', ['DES', 'AES']) +
+        renderEditorField(row, 'privacyPassword', 'password', row.isExisting ? 'Retained after save' : 'Required', row.privacyPassword, row.isExisting ? '' : null) +
+        renderEditorField(row, 'engineId', 'text', 'Optional', row.engineId, null) +
+      '</tr>';
+    }).join('');
+
+    updateDeleteButton();
+  }
+
+  function renderEditorField(row, field, type, placeholder, value, forcedValue) {
+    var error = row.errors[field] || '';
+    var displayValue = forcedValue !== null ? forcedValue : value;
+    var className = error ? 'field-input invalid' : 'field-input';
+    return '<td><div class="field-stack">' +
+      '<input class="' + className + '" type="' + type + '" data-row-id="' + row.id + '" data-field="' + field + '" placeholder="' + placeholder + '" value="' + escapeAttribute(displayValue) + '">' +
+      '<div class="field-row-error">' + escapeHtml(error) + '</div>' +
+    '</div></td>';
+  }
+
+  function renderEditorSelect(row, field, options) {
+    var error = row.errors[field] || '';
+    var className = error ? 'field-select invalid' : 'field-select';
+    return '<td><div class="field-stack">' +
+      '<select class="' + className + '" data-row-id="' + row.id + '" data-field="' + field + '">' +
+      options.map(function (option) {
+        var selected = row[field] === option ? ' selected' : '';
+        return '<option value="' + option + '"' + selected + '>' + option + '</option>';
+      }).join('') +
+      '</select>' +
+      '<div class="field-row-error">' + escapeHtml(error) + '</div>' +
+    '</div></td>';
+  }
+
+  function handleEditorInput(event) {
+    var target = event.target;
+    var rowId = target.getAttribute('data-row-id');
+    var field = target.getAttribute('data-field');
+    if (!rowId || !field) {
+      return;
+    }
+
+    var row = findDraftRow(rowId);
+    if (!row) {
+      return;
+    }
+
+    row[field] = field === 'selected' ? target.checked : target.value;
+    if (row.errors[field]) {
+      delete row.errors[field];
+      if (target.classList.contains('invalid')) {
+        target.classList.remove('invalid');
+        var errorNode = target.parentElement.querySelector('.field-row-error');
+        if (errorNode) {
+          errorNode.textContent = '';
+        }
+      }
+    }
+
+    updateDeleteButton();
+  }
+
+  function requestDeleteRows() {
+    var selectedCount = state.draftRows.filter(function (row) { return row.selected; }).length;
+    if (!selectedCount) {
+      showToast('Select one or more receiver rows before deleting.', 'error');
+      return;
+    }
+
+    state.confirmAction = {
+      type: 'delete',
+      title: 'Delete receiver rows',
+      message: 'The selected rows will be removed from the draft editor. Saved settings are not changed until Submit is confirmed.',
+      summary: [
+        { label: 'Rows selected', value: String(selectedCount) },
+        { label: 'Saved tuples currently active', value: String(state.savedCredentials.length) },
+        { label: 'Shared usernames still allowed', value: 'Yes when tuple differs' }
+      ],
+      warning: 'Deleting a draft row removes it from the pending submission. Use Submit to commit the change to the saved matrix.',
+      confirmLabel: 'Delete rows',
+      variant: 'danger'
+    };
+    openConfirm();
+  }
+
+  function requestSaveRows() {
+    var validation = validateDraftRows();
+    if (!validation.valid) {
+      renderEditor();
+      showToast('Review highlighted tuple issues before submitting.', 'error');
+      return;
+    }
+
+    var added = state.draftRows.filter(function (row) { return !row.isExisting; }).length;
+    var removed = state.savedCredentials.length - state.draftRows.filter(function (row) { return row.isExisting; }).length;
+    state.confirmAction = {
+      type: 'save',
+      title: 'Save SNMPv3 trap receiver settings',
+      message: 'The tuple-qualified receiver matrix will be committed. Duplicate user names remain allowed only when auth protocol and privacy protocol differ.',
+      summary: [
+        { label: 'Total tuples after save', value: String(state.draftRows.length) },
+        { label: 'New rows', value: String(added) },
+        { label: 'Removed rows', value: String(Math.max(removed, 0)) },
+        { label: 'Shared usernames after save', value: String(countSharedUsernames(state.draftRows.map(function (row) { return row.username.trim(); }))) }
+      ],
+      warning: 'Passwords remain masked after save. Unsupported or unmatched tuples should be rejected at runtime rather than bound to the wrong credential.',
+      confirmLabel: 'Confirm and save',
+      variant: 'primary'
+    };
+    openConfirm();
+  }
+
+  function validateDraftRows() {
+    state.draftRows.forEach(function (row) {
+      row.errors = {};
+      if (!row.username.trim()) {
+        row.errors.username = 'User name is required.';
+      }
+      if (!row.authProtocol) {
+        row.errors.authProtocol = 'Auth protocol is required.';
+      }
+      if (!row.privacyProtocol) {
+        row.errors.privacyProtocol = 'Privacy protocol is required.';
+      }
+      if (!row.isExisting && !row.password.trim()) {
+        row.errors.password = 'Password is required for a new row.';
+      }
+      if (!row.isExisting && !row.privacyPassword.trim()) {
+        row.errors.privacyPassword = 'Privacy password is required for a new row.';
+      }
+    });
+
+    var seen = {};
+    state.draftRows.forEach(function (row) {
+      var key;
+      if (row.username.trim() && row.authProtocol && row.privacyProtocol) {
+        key = row.username.trim() + '|' + row.authProtocol + '|' + row.privacyProtocol;
+        if (seen[key]) {
+          row.errors.username = 'This tuple duplicates another row.';
+          row.errors.authProtocol = 'Duplicate tuple.';
+          row.errors.privacyProtocol = 'Duplicate tuple.';
+          seen[key].errors.username = 'This tuple duplicates another row.';
+          seen[key].errors.authProtocol = 'Duplicate tuple.';
+          seen[key].errors.privacyProtocol = 'Duplicate tuple.';
+        } else {
+          seen[key] = row;
+        }
+      }
+    });
+
+    var hasErrors = state.draftRows.some(function (row) {
+      return Object.keys(row.errors).length > 0;
+    });
+    return { valid: !hasErrors };
+  }
+
+  function openConfirm() {
+    document.getElementById('confirmTitle').textContent = state.confirmAction.title;
+    document.getElementById('confirmMessage').textContent = state.confirmAction.message;
+    document.getElementById('confirmSummary').innerHTML = state.confirmAction.summary.map(function (item) {
+      return '<div class="summary-row"><span class="summary-label">' + escapeHtml(item.label) + '</span><span class="summary-value">' + escapeHtml(item.value) + '</span></div>';
+    }).join('');
+
+    var warning = document.getElementById('confirmWarning');
+    if (state.confirmAction.warning) {
+      warning.hidden = false;
+      warning.textContent = state.confirmAction.warning;
+    } else {
+      warning.hidden = true;
+      warning.textContent = '';
+    }
+
+    var confirmButton = document.getElementById('confirmActionButton');
+    confirmButton.textContent = state.confirmAction.confirmLabel;
+    confirmButton.className = state.confirmAction.variant === 'danger' ? 'danger-button' : 'primary-button';
+
+    document.getElementById('confirmModal').classList.add('open');
+    document.getElementById('confirmModal').setAttribute('aria-hidden', 'false');
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirmModal').classList.remove('open');
+    document.getElementById('confirmModal').setAttribute('aria-hidden', 'true');
+    state.confirmAction = null;
+  }
+
+  function runConfirmAction() {
+    if (!state.confirmAction) {
+      return;
+    }
+
+    if (state.confirmAction.type === 'delete') {
+      state.draftRows = state.draftRows.filter(function (row) { return !row.selected; });
+      closeConfirm();
+      renderEditor();
+      showToast('Selected draft rows removed.', 'success');
+      return;
+    }
+
+    if (state.confirmAction.type === 'save') {
+      commitDraftRows();
+      closeConfirm();
+      closeEditor();
+      renderAll();
+      showToast('SNMPv3 trap receiver settings saved.', 'success');
+    }
+  }
+
+  function commitDraftRows() {
+    state.savedCredentials = state.draftRows.map(function (row) {
+      var id = row.isExisting ? Number(row.id) : nextId++;
+      return {
+        id: id,
+        username: row.username.trim(),
+        authProtocol: row.authProtocol,
+        privacyProtocol: row.privacyProtocol,
+        engineId: row.engineId.trim(),
+        updatedAt: formatNow()
+      };
+    });
+
+    addDiagnostic('success', 'Saved ' + state.savedCredentials.length + ' tuple-qualified SNMPv3 receiver profiles. Shared user names remain valid only when the protocol tuple differs.');
+  }
+
+  function previewRuntimeMatch() {
+    var input = {
+      username: document.getElementById('runtimeUsername').value.trim(),
+      authProtocol: document.getElementById('runtimeAuth').value,
+      privacyProtocol: document.getElementById('runtimePrivacy').value,
+      engineId: document.getElementById('runtimeEngine').value.trim()
+    };
+
+    var match = state.savedCredentials.find(function (row) {
+      return row.username === input.username && row.authProtocol === input.authProtocol && row.privacyProtocol === input.privacyProtocol;
+    });
+
+    if (match) {
+      state.runtimeResult = { match: true, row: match };
+      addDiagnostic('success', 'Preview matched ' + match.username + ' / ' + match.authProtocol + ' / ' + match.privacyProtocol + ' to engine ' + (match.engineId || 'not specified') + '.');
+      showToast('Preview matched a saved receiver profile.', 'success');
+    } else {
+      state.runtimeResult = { match: false, input: input };
+      addDiagnostic('warning', 'Preview rejected ' + input.username + ' / ' + input.authProtocol + ' / ' + input.privacyProtocol + ' because no configured tuple matched.');
+      showToast('No configured tuple matched the preview input.', 'error');
+    }
+
+    renderRuntimeResult();
+    renderDiagnostics();
+    state.currentTab = 'runtime';
+    renderTabs();
+  }
+
+  function clearRuntimePreview() {
+    state.runtimeResult = null;
+    renderRuntimeResult();
+    showToast('Runtime preview cleared.', 'info');
+  }
+
+  function addDiagnostic(level, message) {
+    state.diagnostics.unshift({ time: formatNow(), level: level, message: message });
+    state.diagnostics = state.diagnostics.slice(0, 7);
+  }
+
+  function updateDeleteButton() {
+    var selectedCount = state.draftRows.filter(function (row) { return row.selected; }).length;
+    document.getElementById('deleteRowButton').disabled = selectedCount === 0;
+  }
+
+  function createDraftRow(isExisting) {
+    return {
+      id: 'draft-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+      username: '',
+      authProtocol: 'MD5',
+      password: '',
+      privacyProtocol: 'DES',
+      privacyPassword: '',
+      engineId: '',
+      selected: false,
+      isExisting: !!isExisting,
+      errors: {}
+    };
+  }
+
+  function findDraftRow(rowId) {
+    return state.draftRows.find(function (row) {
+      return String(row.id) === String(rowId);
+    });
+  }
+
+  function getSharedUserCount() {
+    return countSharedUsernames(state.savedCredentials.map(function (row) {
+      return row.username;
+    }));
+  }
+
+  function countSharedUsernames(names) {
+    var counts = {};
+    names.filter(Boolean).forEach(function (name) {
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.keys(counts).filter(function (name) { return counts[name] > 1; }).length;
+  }
+
+  function formatNow() {
+    var date = new Date();
+    var year = String(date.getFullYear());
+    var month = String(date.getMonth() + 1).padStart(2, '0');
+    var day = String(date.getDate()).padStart(2, '0');
+    var hours = String(date.getHours()).padStart(2, '0');
+    var minutes = String(date.getMinutes()).padStart(2, '0');
+    return year + '-' + month + '-' + day + ' ' + hours + ':' + minutes;
+  }
+
+  function showToast(message, type) {
+    var stack = document.getElementById('toastStack');
+    var toast = document.createElement('div');
+    toast.className = 'toast ' + (type || 'info');
+    toast.textContent = message;
+    stack.appendChild(toast);
+
+    window.setTimeout(function () {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      window.setTimeout(function () {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 200);
+    }, 2800);
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function escapeAttribute(value) {
+    return escapeHtml(value == null ? '' : value);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

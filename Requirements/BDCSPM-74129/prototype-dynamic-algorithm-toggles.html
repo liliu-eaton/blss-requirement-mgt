@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLSS - Devices - UPS-CY(1) - Monitor Configuration</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #f4f5f7; font-size: 13px; color: #333; overflow: hidden; }
+
+        /* ===== HEADER ===== */
+        .app-header {
+            height: 40px; background: #1a1a2e; display: flex; align-items: center; justify-content: space-between;
+            padding: 0 12px; border-bottom: 1px solid #000; z-index: 100;
+        }
+        .app-header .logo { display: flex; align-items: center; gap: 6px; }
+        .app-header .logo span { color: #fff; font-weight: 700; font-size: 14px; letter-spacing: 3px; }
+        .app-header .nav-icons { display: flex; align-items: center; gap: 4px; }
+        .app-header .nav-icon {
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: #aaa; font-size: 14px; cursor: pointer; position: relative;
+        }
+        .app-header .nav-icon:hover { background: rgba(255,255,255,0.1); }
+        .app-header .nav-icon .badge {
+            position: absolute; top: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%;
+            background: #f44336; color: #fff; font-size: 8px; display: flex; align-items: center; justify-content: center;
+        }
+        .app-header .user-area { display: flex; align-items: center; gap: 8px; color: #ccc; font-size: 12px; cursor: pointer; }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main-layout { display: flex; height: calc(100vh - 40px); }
+
+        /* ===== LEFT SIDEBAR ===== */
+        .sidebar {
+            width: 170px; background: #fff; border-right: 1px solid #e0e0e0; overflow-y: auto;
+            display: flex; flex-direction: column;
+        }
+        .sidebar-item {
+            padding: 9px 14px; cursor: pointer; font-size: 12px; color: #555;
+            display: flex; align-items: center; gap: 10px; border-left: 3px solid transparent;
+            transition: background 0.15s;
+        }
+        .sidebar-item:hover { background: #f0f7ff; }
+        .sidebar-item.active { background: #e3f2fd; border-left-color: #1976d2; color: #1976d2; font-weight: 600; }
+        .sidebar-item .icon { width: 16px; text-align: center; font-size: 12px; opacity: 0.7; }
+        .sidebar-item.sub { padding-left: 40px; font-size: 11px; }
+        .sidebar-item.sub.active { font-weight: 600; }
+        .sidebar-footer { margin-top: auto; padding: 8px 14px; font-size: 10px; color: #999; border-top: 1px solid #eee; }
+
+        /* ===== CONTENT ===== */
+        .content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Device page header */
+        .device-page-header {
+            background: #fff; padding: 8px 16px; border-bottom: 1px solid #e0e0e0;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .device-page-header .breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+        .device-page-header .breadcrumb .sep { color: #999; }
+        .device-page-header .actions { display: flex; gap: 6px; }
+        .device-page-header .actions button {
+            padding: 5px 12px; font-size: 11px; border: 1px solid #ccc; border-radius: 3px;
+            background: #fff; cursor: pointer; color: #555;
+        }
+        .device-page-header .actions button:hover { background: #f5f5f5; }
+        .device-page-header .actions button.danger { color: #d32f2f; border-color: #d32f2f; }
+
+        /* Device content split */
+        .device-content { flex: 1; display: flex; overflow: hidden; }
+
+        /* Left info panel */
+        .device-info-panel {
+            width: 280px; background: #fff; border-right: 1px solid #e0e0e0; overflow-y: auto; padding: 12px;
+        }
+        .info-section-title { font-size: 12px; font-weight: 600; color: #333; margin: 10px 0 6px; padding-bottom: 4px; border-bottom: 1px solid #eee; }
+        .info-row { display: flex; padding: 3px 0; font-size: 11px; }
+        .info-row .lbl { width: 100px; color: #777; flex-shrink: 0; }
+        .info-row .val { color: #333; word-break: break-all; }
+        .info-row .val a { color: #1976d2; text-decoration: none; }
+
+        /* Monitor config main area */
+        .monitor-main { flex: 1; overflow-y: auto; padding: 12px 16px; background: #f4f5f7; }
+
+        /* Device tabs row */
+        .device-tabs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+        .device-tab {
+            padding: 5px 12px; font-size: 11px; border-radius: 14px; cursor: pointer;
+            background: #e0e0e0; color: #555; transition: all 0.15s;
+        }
+        .device-tab:hover { background: #bbdefb; color: #1565c0; }
+        .device-tab.active { background: #1976d2; color: #fff; }
+        .device-tab.green { background: #c8e6c9; color: #2e7d32; }
+
+        /* Section header */
+        .section-header {
+            font-size: 14px; font-weight: 600; color: #333; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* Sub-tabs */
+        .sub-tabs { display: flex; border-bottom: 2px solid #e0e0e0; margin-bottom: 14px; }
+        .sub-tab {
+            padding: 7px 16px; font-size: 12px; color: #666; cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s;
+        }
+        .sub-tab:hover { color: #1976d2; }
+        .sub-tab.active { color: #1976d2; border-bottom-color: #1976d2; font-weight: 600; }
+
+        /* Config form */
+        .config-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 14px; margin-bottom: 12px; }
+        .config-card-title { font-size: 12px; font-weight: 600; color: #333; margin-bottom: 10px; }
+        .form-row { display: flex; align-items: center; padding: 5px 0; }
+        .form-row .form-label { width: 200px; font-size: 12px; color: #555; flex-shrink: 0; }
+        .form-row .form-field { flex: 1; display: flex; align-items: center; gap: 6px; }
+        .form-row input[type="text"], .form-row select {
+            padding: 5px 8px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; width: 200px;
+        }
+        .form-row .required { color: #d32f2f; margin-right: 2px; }
+        .form-row .unit { font-size: 11px; color: #888; }
+        .form-row .search-btn {
+            width: 24px; height: 24px; border: 1px solid #ccc; border-radius: 3px; background: #fff;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px;
+        }
+
+        /* Toggle */
+        .toggle { position: relative; width: 36px; height: 18px; display: inline-block; vertical-align: middle; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background: #bbb; border-radius: 18px; transition: 0.25s;
+        }
+        .toggle .slider:before {
+            content: ''; position: absolute; height: 14px; width: 14px; left: 2px; bottom: 2px;
+            background: white; border-radius: 50%; transition: 0.25s;
+        }
+        .toggle input:checked + .slider { background: #1976d2; }
+        .toggle input:checked + .slider:before { transform: translateX(18px); }
+        .toggle input:disabled + .slider { background: #e0e0e0; cursor: not-allowed; opacity: 0.6; }
+
+        /* ===== ALGORITHM SECTION ===== */
+        .algo-section { background: #fff; border: 1px solid #e0e0e0; border-radius: 4px; padding: 14px; margin-bottom: 12px; }
+        .algo-section-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+        }
+        .algo-section-header .title { font-size: 12px; font-weight: 600; color: #333; }
+        .algo-section-header .data-driven-badge {
+            font-size: 9px; background: #e8f5e9; color: #2e7d32; padding: 2px 7px; border-radius: 8px; font-weight: 500;
+        }
+
+        .algo-row {
+            display: flex; align-items: center; padding: 8px 10px; margin-bottom: 6px;
+            border: 1px solid #eee; border-radius: 4px; transition: all 0.15s;
+        }
+        .algo-row:last-of-type { margin-bottom: 0; }
+        .algo-row:hover { border-color: #bbdefb; background: #fcfdff; }
+        .algo-row.on { border-color: #c8e6c9; background: #f8fdf8; }
+        .algo-row.no-access { opacity: 0.6; background: #fafafa; }
+        .algo-row.over-quota { border-color: #ffcdd2; background: #fffafa; }
+
+        .algo-row .algo-icon-box {
+            width: 28px; height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+            font-size: 13px; margin-right: 10px; flex-shrink: 0;
+        }
+        .algo-row .algo-details { flex: 1; min-width: 0; }
+        .algo-row .algo-name { font-size: 12px; font-weight: 600; color: #333; }
+        .algo-row .algo-sub { font-size: 10px; color: #888; margin-top: 1px; }
+        .algo-row .algo-sub .warn { color: #e65100; font-weight: 600; }
+        .algo-row .algo-sub .error { color: #c62828; font-weight: 600; }
+        .algo-row .algo-sub .hint { color: #e65100; }
+
+        .algo-row .algo-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .algo-row .status-pill { font-size: 9px; padding: 2px 7px; border-radius: 8px; font-weight: 500; white-space: nowrap; }
+        .algo-row .status-pill.enabled { background: #e8f5e9; color: #2e7d32; }
+        .algo-row .status-pill.disabled { background: #f5f5f5; color: #888; }
+        .algo-row .status-pill.not-licensed { background: #ffebee; color: #c62828; }
+        .algo-row .status-pill.no-quota { background: #fff3e0; color: #e65100; }
+        .algo-row .status-pill.over-quota { background: #ffebee; color: #c62828; }
+
+        .algo-footer { margin-top: 8px; padding-top: 6px; border-top: 1px dashed #eee; display: flex; align-items: center; gap: 6px; font-size: 10px; color: #aaa; }
+        .algo-footer .dot { width: 5px; height: 5px; border-radius: 50%; background: #4caf50; }
+
+        /* ===== RIGHT PROTOCOL PANEL ===== */
+        .protocol-panel {
+            width: 260px; background: #fff; border-left: 1px solid #e0e0e0; overflow-y: auto;
+            display: flex;
+        }
+        .proto-tab-list {
+            width: 90px; background: #f8f9fa; border-right: 1px solid #eee; padding: 8px 0; overflow-y: auto;
+        }
+        .proto-tab-item {
+            padding: 7px 10px; font-size: 10px; color: #555; cursor: pointer; border-left: 2px solid transparent;
+        }
+        .proto-tab-item:hover { background: #eef; }
+        .proto-tab-item.active { background: #1976d2; color: #fff; border-left-color: #1565c0; }
+        .proto-config { flex: 1; padding: 10px; overflow-y: auto; }
+        .proto-config .form-row .form-label { width: 90px; font-size: 11px; }
+        .proto-config .form-row input[type="text"] { width: 100%; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.show { display: flex; }
+        .modal {
+            background: #fff; border-radius: 8px; padding: 20px 24px; max-width: 400px; width: 90%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
+        .modal h3 { font-size: 14px; margin-bottom: 10px; }
+        .modal p { font-size: 12px; color: #555; margin-bottom: 6px; }
+        .modal .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+        .modal .modal-actions button {
+            padding: 7px 16px; font-size: 12px; border-radius: 4px; cursor: pointer; border: 1px solid #ccc; background: #fff;
+        }
+        .modal .modal-actions button.primary { background: #1976d2; color: #fff; border-color: #1976d2; }
+        .modal .modal-actions button.primary:hover { background: #1565c0; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #323232; color: #fff; padding: 10px 20px; border-radius: 4px;
+            font-size: 12px; z-index: 2000; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .toast.show { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+    <div class="logo"><span>E·T·O·N</span></div>
+    <div style="display:flex; align-items:center; gap:16px;">
+        <div class="nav-icons">
+            <div class="nav-icon">🌐</div>
+            <div class="nav-icon">🔄</div>
+            <div class="nav-icon">🏠</div>
+            <div class="nav-icon">🔔<span class="badge">3</span></div>
+            <div class="nav-icon">⚠<span class="badge" style="background:#ff9800;">1</span></div>
+        </div>
+        <div class="user-area">admin:admin ▾</div>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="sidebar-item"><span class="icon">🏠</span> Home</div>
+        <div class="sidebar-item"><span class="icon">📊</span> Data Analysis</div>
+        <div class="sidebar-item"><span class="icon">⚡</span> One Line Diagrams</div>
+        <div class="sidebar-item"><span class="icon">📈</span> Power Quality</div>
+        <div class="sidebar-item"><span class="icon">🔔</span> Alarms</div>
+        <div class="sidebar-item"><span class="icon">📅</span> Calendar</div>
+        <div class="sidebar-item"><span class="icon">🔒</span> Rights Access</div>
+        <div class="sidebar-item"><span class="icon">👥</span> Groups</div>
+        <div class="sidebar-item active"><span class="icon">💻</span> Devices</div>
+        <div class="sidebar-item sub active">Devices</div>
+        <div class="sidebar-item sub">Types</div>
+        <div class="sidebar-item sub">Manufacturers</div>
+        <div class="sidebar-item sub">Product Lines</div>
+        <div class="sidebar-item sub">Models</div>
+        <div class="sidebar-item sub">Consumables</div>
+        <div class="sidebar-item sub">Manage</div>
+        <div class="sidebar-item"><span class="icon">🖥</span> IT Devices</div>
+        <div class="sidebar-item"><span class="icon">🛡</span> Security Control</div>
+        <div class="sidebar-item"><span class="icon">🔧</span> Maintenance</div>
+        <div class="sidebar-item"><span class="icon">⚙</span> Automations</div>
+        <div class="sidebar-item"><span class="icon">🗄</span> Racks</div>
+        <div class="sidebar-item"><span class="icon">🔗</span> Connections</div>
+        <div class="sidebar-item"><span class="icon">🔍</span> Discovery</div>
+        <div class="sidebar-item"><span class="icon">📡</span> Monitoring</div>
+        <div class="sidebar-item"><span class="icon">🔀</span> Workflow</div>
+        <div class="sidebar-item"><span class="icon">🧩</span> Integrations</div>
+        <div class="sidebar-item"><span class="icon">📥</span> Import | Export</div>
+        <div class="sidebar-item"><span class="icon">⚙</span> Settings</div>
+        <div class="sidebar-footer">Copyright © 2024 Eaton.<br>All Rights Reserved.</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+
+        <!-- Device page header -->
+        <div class="device-page-header">
+            <div class="breadcrumb">
+                <span>◀</span>
+                <span class="sep">|</span>
+                <span style="font-weight:600;">Devices - UPS-CY(1)</span>
+            </div>
+            <div class="actions">
+                <button>Firmware</button>
+                <button>New</button>
+                <button class="danger">Delete</button>
+            </div>
+        </div>
+
+        <!-- Device content -->
+        <div class="device-content">
+
+            <!-- Left info panel -->
+            <div class="device-info-panel">
+                <div class="info-section-title">▾ Device</div>
+                <div class="info-row"><span class="lbl">Name</span><span class="val">UPS-CY(1)</span></div>
+                <div class="info-row"><span class="lbl">Alias</span><span class="val"></span></div>
+                <div class="info-row"><span class="lbl">UUID</span><span class="val" style="font-size:9px;">a5c2cb4a-8353-4a11-915a-46a7cb12833c</span></div>
+                <div class="info-row"><span class="lbl">Type</span><span class="val"><a href="#">UPS - Rackmount</a></span></div>
+                <div class="info-row"><span class="lbl">Manufacturer</span><span class="val"><a href="#">Eaton</a></span></div>
+                <div class="info-row"><span class="lbl">Product Line</span><span class="val"><a href="#">5P UPS</a></span></div>
+                <div class="info-row"><span class="lbl">Model</span><span class="val"><a href="#">5P550R</a></span></div>
+                <div class="info-row"><span class="lbl">Life Cycle</span><span class="val">Available</span></div>
+                <div class="info-row"><span class="lbl">IP Address</span><span class="val">10.130.218.192</span></div>
+                <div class="info-row"><span class="lbl">Nominal Voltage</span><span class="val"></span></div>
+                <div class="info-row"><span class="lbl">Nominal Current</span><span class="val"></span></div>
+                <div class="info-row"><span class="lbl">MAC Address</span><span class="val"></span></div>
+                <div class="info-row"><span class="lbl">Department</span><span class="val">—</span></div>
+
+                <div class="info-section-title">▾ Physical</div>
+                <div class="info-row"><span class="lbl">Height</span><span class="val">43.20</span></div>
+                <div class="info-row"><span class="lbl">Width</span><span class="val">438.00</span></div>
+                <div class="info-row"><span class="lbl">Depth</span><span class="val">364.00</span></div>
+                <div class="info-row"><span class="lbl">Weight</span><span class="val">8.9</span></div>
+                <div class="info-row"><span class="lbl">RU - Unit</span><span class="val">1</span></div>
+
+                <div class="info-section-title">▾ Location</div>
+                <div class="info-section-title">▾ Reservation</div>
+                <div class="info-section-title">▾ Ports</div>
+                <div class="info-row"><span class="lbl"></span><span class="val" style="font-size:10px;">Total | Used | Reserved | Broken</span></div>
+            </div>
+
+            <!-- Monitor main area -->
+            <div class="monitor-main">
+
+                <!-- Device tabs row -->
+                <div class="device-tabs">
+                    <div class="device-tab">Dashboard</div>
+                    <div class="device-tab green">Graphs</div>
+                    <div class="device-tab green">Ports</div>
+                    <div class="device-tab green">Alarm Panel</div>
+                    <div class="device-tab green">Traps</div>
+                    <div class="device-tab green">Calendar</div>
+                    <div class="device-tab green">Attributes</div>
+                    <div class="device-tab active">Monitor</div>
+                    <div class="device-tab green">Applications</div>
+                    <div class="device-tab green">Images</div>
+                    <div class="device-tab green">Groups</div>
+                    <div class="device-tab green">Links</div>
+                    <div class="device-tab green">Projects</div>
+                    <div class="device-tab green">Root Cause</div>
+                    <div class="device-tab green">Impact</div>
+                    <div class="device-tab green">Services</div>
+                    <div class="device-tab green">Warranty</div>
+                </div>
+
+                <!-- Section title -->
+                <div class="section-header">☰ Monitor Configuration <span style="flex:1;"></span><button style="padding:3px 10px; font-size:11px; border:1px solid #ccc; border-radius:3px; background:#fff; cursor:pointer; margin-right:4px;">Verify</button><button style="padding:3px 10px; font-size:11px; border:1px solid #1976d2; border-radius:3px; background:#1976d2; color:#fff; cursor:pointer;">Submit</button></div>
+
+                <!-- Sub tabs -->
+                <div class="sub-tabs">
+                    <div class="sub-tab active">Monitor Config</div>
+                    <div class="sub-tab">Monitoring Templates</div>
+                    <div class="sub-tab">Attributes</div>
+                    <div class="sub-tab">Triggers</div>
+                    <div class="sub-tab">Actions</div>
+                </div>
+
+                <!-- Connection settings -->
+                <div class="config-card">
+                    <div class="form-row">
+                        <span class="form-label"><span class="required">*</span> IP Address</span>
+                        <div class="form-field"><input type="text" value="10.130.218.192"></div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label"><span class="required">*</span> Probe</span>
+                        <div class="form-field"><input type="text" value="SP10.6.6.251"> <span class="search-btn">⚙</span></div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">RDG Server</span>
+                        <div class="form-field"><input type="text" value="" placeholder="Search..."> <span class="search-btn">🔍</span></div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">RDG Client</span>
+                        <div class="form-field"><input type="text" value="" placeholder="Search..."> <span class="search-btn">🔍</span></div>
+                    </div>
+                </div>
+
+                <!-- Polling Groups -->
+                <div class="config-card">
+                    <div class="config-card-title">Polling Groups Settings</div>
+                    <div class="form-row">
+                        <span class="form-label">Baseline Interval</span>
+                        <div class="form-field"><span class="required">*</span> <input type="text" value="30" style="width:60px;"> <span class="unit">s</span></div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">High Priority</span>
+                        <div class="form-field"><span class="required">*</span> <input type="text" value="1" style="width:50px;"> <span class="unit">times Baseline</span> <input type="text" value="30s" style="width:50px; margin-left:12px;" disabled></div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">Medium Priority</span>
+                        <div class="form-field"><span class="required">*</span> <input type="text" value="1" style="width:50px;"> <span class="unit">times High</span> <input type="text" value="30s" style="width:50px; margin-left:12px;" disabled></div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">Low Priority</span>
+                        <div class="form-field"><span class="required">*</span> <input type="text" value="1" style="width:50px;"> <span class="unit">times Medium</span> <input type="text" value="30s" style="width:50px; margin-left:12px;" disabled></div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">Retries</span>
+                        <div class="form-field"><input type="text" value="0" style="width:60px;"></div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">Timeout (sec)</span>
+                        <div class="form-field"><span class="required">*</span> <input type="text" value="10" style="width:60px;"></div>
+                    </div>
+                </div>
+
+                <!-- Monitoring Toggles -->
+                <div class="config-card">
+                    <div class="form-row">
+                        <span class="form-label">Monitored</span>
+                        <div class="form-field">
+                            <label class="toggle"><input type="checkbox" checked><span class="slider"></span></label>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <span class="form-label">Remote Alarm Monitoring (UPSaaS)</span>
+                        <div class="form-field">
+                            <label class="toggle"><input type="checkbox"><span class="slider"></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== DYNAMIC ALGORITHM TOGGLES ===== -->
+                <div class="algo-section">
+                    <div class="algo-section-header">
+                        <span class="title">Analytics Algorithms</span>
+                        <span class="data-driven-badge">● Data-Driven</span>
+                    </div>
+
+                    <!-- 1. UPS Analytics — Enabled, healthy quota -->
+                    <div class="algo-row on">
+                        <div class="algo-icon-box" style="background:#e3f2fd; color:#1565c0;">⚡</div>
+                        <div class="algo-details">
+                            <div class="algo-name">UPS Analytics</div>
+                            <div class="algo-sub">Quota: 12 / 50 used</div>
+                        </div>
+                        <div class="algo-right">
+                            <span class="status-pill enabled">Enabled</span>
+                            <label class="toggle"><input type="checkbox" checked onchange="onAlgoToggle(this,'UPS_ANALYTICS')"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <!-- 2. Battery Health — Licensed, off -->
+                    <div class="algo-row">
+                        <div class="algo-icon-box" style="background:#fff3e0; color:#e65100;">🔋</div>
+                        <div class="algo-details">
+                            <div class="algo-name">Battery Health Analytics</div>
+                            <div class="algo-sub">Quota: 8 / 30 used</div>
+                        </div>
+                        <div class="algo-right">
+                            <span class="status-pill disabled">Disabled</span>
+                            <label class="toggle"><input type="checkbox" onchange="onAlgoToggle(this,'BATTERY_HEALTH')"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <!-- 3. Predictive Maintenance — Quota low warning -->
+                    <div class="algo-row">
+                        <div class="algo-icon-box" style="background:#f3e5f5; color:#6a1b9a;">🔮</div>
+                        <div class="algo-details">
+                            <div class="algo-name">Predictive Maintenance</div>
+                            <div class="algo-sub">Quota: 19 / 20 used <span class="warn">⚠ 1 remaining</span></div>
+                        </div>
+                        <div class="algo-right">
+                            <span class="status-pill disabled">Disabled</span>
+                            <label class="toggle"><input type="checkbox" onchange="onAlgoToggle(this,'PREDICTIVE_MAINT')"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <!-- 4. Motor Analytics — Not licensed -->
+                    <div class="algo-row no-access">
+                        <div class="algo-icon-box" style="background:#e8f5e9; color:#2e7d32;">🏭</div>
+                        <div class="algo-details">
+                            <div class="algo-name">Motor Analytics</div>
+                            <div class="algo-sub" style="color:#aaa;">Not licensed — contact administrator</div>
+                        </div>
+                        <div class="algo-right">
+                            <span class="status-pill not-licensed">Not Licensed</span>
+                            <label class="toggle"><input type="checkbox" disabled><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <!-- 5. Power Quality Deep — Quota exhausted, NOT enabled here → cannot enable -->
+                    <div class="algo-row no-access">
+                        <div class="algo-icon-box" style="background:#fce4ec; color:#c62828;">📊</div>
+                        <div class="algo-details">
+                            <div class="algo-name">Power Quality Deep Analysis</div>
+                            <div class="algo-sub">Quota: 10 / 10 used <span class="error">✗ Exhausted</span></div>
+                        </div>
+                        <div class="algo-right">
+                            <span class="status-pill no-quota">No Quota</span>
+                            <label class="toggle"><input type="checkbox" disabled><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <!-- 6. Thermal Trend — ENABLED here, quota exhausted globally → CAN disable to release -->
+                    <div class="algo-row over-quota">
+                        <div class="algo-icon-box" style="background:#ffebee; color:#c62828;">⚠</div>
+                        <div class="algo-details">
+                            <div class="algo-name">Thermal Trend Analytics</div>
+                            <div class="algo-sub">Quota: 25 / 25 used <span class="error">✗ Exhausted</span></div>
+                            <div class="algo-sub"><span class="hint">This device uses 1 unit — disable to release</span></div>
+                        </div>
+                        <div class="algo-right">
+                            <span class="status-pill over-quota">Enabled (Over)</span>
+                            <label class="toggle"><input type="checkbox" checked onchange="onAlgoToggle(this,'THERMAL_TREND')"><span class="slider"></span></label>
+                        </div>
+                    </div>
+
+                    <div class="algo-footer">
+                        <span class="dot"></span>
+                        <span>6 algorithms loaded for device type "UPS" | Last sync: 2s ago</span>
+                    </div>
+                </div>
+                <!-- ===== END ALGORITHM TOGGLES ===== -->
+
+            </div>
+
+            <!-- Right protocol panel -->
+            <div class="protocol-panel">
+                <div class="proto-tab-list">
+                    <div class="proto-tab-item active">SNMP</div>
+                    <div class="proto-tab-item">MODBUS</div>
+                    <div class="proto-tab-item">BACNET</div>
+                    <div class="proto-tab-item">IPMI</div>
+                    <div class="proto-tab-item">Rat File</div>
+                    <div class="proto-tab-item">HTTP/XML</div>
+                    <div class="proto-tab-item">API Input</div>
+                    <div class="proto-tab-item">OPC</div>
+                    <div class="proto-tab-item">OPC UA</div>
+                    <div class="proto-tab-item">MQTT</div>
+                    <div class="proto-tab-item">Web Crawler</div>
+                    <div class="proto-tab-item">VFS</div>
+                    <div class="proto-tab-item">Redfish</div>
+                    <div class="proto-tab-item">Webhook</div>
+                </div>
+                <div class="proto-config">
+                    <div class="form-row"><span class="form-label">Port</span><div class="form-field"><input type="text" value="161" style="width:50px;"></div></div>
+                    <div class="form-row"><span class="form-label">Protocol</span><div class="form-field"><input type="text" value="UDP" style="width:50px;"></div></div>
+                    <div class="form-row"><span class="form-label">Version</span><div class="form-field"><input type="text" value="SNMP_VERSION_1"></div></div>
+                    <div class="form-row"><span class="form-label">Get Community</span><div class="form-field"><input type="text" value="••••••••"></div></div>
+                    <div class="form-row"><span class="form-label">Set Community</span><div class="form-field"><input type="text" value="••••••••"></div></div>
+                    <div class="form-row"><span class="form-label">Security Level</span><div class="form-field"><input type="text" value="authNoPriv"></div></div>
+                    <div class="form-row"><span class="form-label">User Name</span><div class="form-field"><input type="text" value=""></div></div>
+                    <div class="form-row"><span class="form-label">Auth Protocol</span><div class="form-field"><input type="text" value="MD5"></div></div>
+                    <div class="form-row"><span class="form-label">Password</span><div class="form-field"><input type="text" value=""></div></div>
+                    <div class="form-row"><span class="form-label">Context</span><div class="form-field"><input type="text" value=""></div></div>
+                    <div class="form-row"><span class="form-label">Privacy Protocol</span><div class="form-field"><input type="text" value="DES"></div></div>
+                    <div class="form-row"><span class="form-label">Privacy Password</span><div class="form-field"><input type="text" value=""></div></div>
+                    <div class="form-row"><span class="form-label">Daisy Chain ID</span><div class="form-field"><input type="text" value="0"></div></div>
+                    <div class="form-row"><span class="form-label">Trap Community</span><div class="form-field"><input type="text" value=""></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Enable confirmation -->
+<div class="modal-overlay" id="enableModal">
+    <div class="modal">
+        <h3>Enable Algorithm</h3>
+        <p id="modal-algo-name"></p>
+        <p id="modal-quota-info"></p>
+        <div class="modal-actions">
+            <button onclick="cancelEnable()">Cancel</button>
+            <button class="primary" onclick="confirmEnable()">Enable</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Disable confirmation -->
+<div class="modal-overlay" id="disableModal">
+    <div class="modal">
+        <h3>Disable Algorithm</h3>
+        <p id="disable-modal-msg"></p>
+        <div class="modal-actions">
+            <button onclick="cancelDisable()">Cancel</button>
+            <button class="primary" onclick="confirmDisable()">Disable</button>
+        </div>
+    </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================================================
+// DATA-DRIVEN ALGORITHM TOGGLE ENGINE
+// Simulates enforcement engine behavior
+// =====================================================
+const algorithms = {
+    UPS_ANALYTICS:      { name: 'UPS Analytics',            total: 50, used: 12, enabledHere: true  },
+    BATTERY_HEALTH:     { name: 'Battery Health Analytics', total: 30, used: 8,  enabledHere: false },
+    PREDICTIVE_MAINT:   { name: 'Predictive Maintenance',  total: 20, used: 19, enabledHere: false },
+    THERMAL_TREND:      { name: 'Thermal Trend Analytics',  total: 25, used: 25, enabledHere: true  },
+};
+
+let pendingToggle = null;
+
+function onAlgoToggle(checkbox, code) {
+    const algo = algorithms[code];
+    if (!algo) return;
+
+    if (checkbox.checked) {
+        // ENABLE — confirm with quota impact
+        const remaining = algo.total - algo.used;
+        document.getElementById('modal-algo-name').textContent =
+            `Enable "${algo.name}" on this device?`;
+        document.getElementById('modal-quota-info').innerHTML =
+            `This will consume <strong>1</strong> quota unit.<br>` +
+            `Current: ${algo.used} / ${algo.total} used<br>` +
+            `After: ${algo.used + 1} / ${algo.total} | Remaining: <strong>${remaining - 1}</strong>`;
+        document.getElementById('enableModal').classList.add('show');
+        pendingToggle = { checkbox, code, action: 'enable' };
+    } else {
+        // DISABLE — confirm release
+        document.getElementById('disable-modal-msg').innerHTML =
+            `Disable "<strong>${algo.name}</strong>" on this device?<br>` +
+            `This will release 1 quota unit.<br>` +
+            `After: ${algo.used - 1} / ${algo.total} used.`;
+        document.getElementById('disableModal').classList.add('show');
+        pendingToggle = { checkbox, code, action: 'disable' };
+    }
+}
+
+function cancelEnable() {
+    document.getElementById('enableModal').classList.remove('show');
+    if (pendingToggle) pendingToggle.checkbox.checked = false;
+    pendingToggle = null;
+}
+
+function confirmEnable() {
+    const { code } = pendingToggle;
+    algorithms[code].used++;
+    algorithms[code].enabledHere = true;
+    document.getElementById('enableModal').classList.remove('show');
+    showToast(`✓ ${algorithms[code].name} enabled. Quota charged (${algorithms[code].used}/${algorithms[code].total}).`);
+    pendingToggle = null;
+}
+
+function cancelDisable() {
+    document.getElementById('disableModal').classList.remove('show');
+    if (pendingToggle) pendingToggle.checkbox.checked = true;
+    pendingToggle = null;
+}
+
+function confirmDisable() {
+    const { code } = pendingToggle;
+    algorithms[code].used--;
+    algorithms[code].enabledHere = false;
+    document.getElementById('disableModal').classList.remove('show');
+    showToast(`✓ ${algorithms[code].name} disabled. Quota released (${algorithms[code].used}/${algorithms[code].total}).`);
+    pendingToggle = null;
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>

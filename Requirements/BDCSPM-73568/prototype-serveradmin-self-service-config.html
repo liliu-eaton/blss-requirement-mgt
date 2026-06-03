@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ServerAdmin - System Settings Prototype</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #F4F5F7; color: #333; }
+
+/* Header */
+.header {
+  height: 56px;
+  background: linear-gradient(135deg, #0057B8 0%, #003C7E 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+.header-brand {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+.header-logout {
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+  text-decoration: none;
+}
+.header-logout:hover { text-decoration: underline; }
+
+/* Sidebar */
+.sidebar {
+  width: 240px;
+  background: #1A2138;
+  position: fixed;
+  top: 56px;
+  left: 0;
+  bottom: 0;
+  overflow-y: auto;
+  z-index: 900;
+}
+.sidebar-nav { list-style: none; padding: 8px 0; }
+.sidebar-nav li {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  color: #B0BEC5;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-left: 3px solid transparent;
+}
+.sidebar-nav li:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+}
+.sidebar-nav li.active {
+  background: rgba(0,87,184,0.2);
+  color: #64B5F6;
+  border-left-color: #64B5F6;
+}
+.sidebar-nav li .nav-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+/* Main Content */
+.main {
+  margin-left: 240px;
+  margin-top: 56px;
+  padding: 24px 32px;
+  min-height: calc(100vh - 56px);
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* Page Title */
+.page-title {
+  color: #0057B8;
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #0057B8;
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  border-bottom: 2px solid #E0E0E0;
+  margin-bottom: 24px;
+}
+.tab {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  transition: all 0.2s;
+}
+.tab:hover { color: #0057B8; }
+.tab.active {
+  color: #0057B8;
+  border-bottom-color: #0057B8;
+  font-weight: 600;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Cards */
+.config-card {
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.config-card-header {
+  background: #F8F9FA;
+  padding: 14px 20px;
+  border-bottom: 1px solid #E0E0E0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.config-card-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+.config-card-body { padding: 20px; }
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 18px;
+}
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 6px;
+}
+.form-group .help-text {
+  font-size: 12px;
+  color: #888;
+  margin-top: 4px;
+}
+.form-row {
+  display: flex;
+  gap: 16px;
+}
+.form-row .form-group { flex: 1; }
+input[type="text"], input[type="number"], input[type="password"], input[type="url"], select, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #CCC;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: #0057B8;
+  box-shadow: 0 0 0 2px rgba(0,87,184,0.1);
+}
+input.error { border-color: #D32F2F; }
+.error-message {
+  color: #D32F2F;
+  font-size: 12px;
+  margin-top: 4px;
+  display: none;
+}
+input.error + .error-message { display: block; }
+textarea { resize: vertical; min-height: 80px; }
+
+/* Toggle Switch */
+.toggle-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: #CCC;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.toggle.active { background: #4CAF50; }
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle.active::after { transform: translateX(20px); }
+.toggle-label { font-size: 14px; color: #333; }
+
+/* Buttons */
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.btn-primary { background: #0057B8; color: #fff; }
+.btn-primary:hover { background: #004494; }
+.btn-secondary { background: #E0E0E0; color: #333; }
+.btn-secondary:hover { background: #D0D0D0; }
+.btn-danger { background: #D32F2F; color: #fff; }
+.btn-danger:hover { background: #B71C1C; }
+.btn-success { background: #388E3C; color: #fff; }
+.btn-success:hover { background: #2E7D32; }
+.btn-sm { padding: 6px 14px; font-size: 13px; }
+.btn-group { display: flex; gap: 10px; margin-top: 20px; }
+
+/* Status Badges */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-success { background: #E8F5E9; color: #2E7D32; }
+.badge-warning { background: #FFF3E0; color: #E65100; }
+.badge-error { background: #FFEBEE; color: #C62828; }
+.badge-info { background: #E3F2FD; color: #1565C0; }
+
+/* Status Panel */
+.status-panel {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.status-item {
+  background: #fff;
+  border-radius: 6px;
+  padding: 16px 20px;
+  flex: 1;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  text-align: center;
+}
+.status-item .status-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0057B8;
+  margin-bottom: 4px;
+}
+.status-item .status-label {
+  font-size: 12px;
+  color: #888;
+  text-transform: uppercase;
+}
+
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.info-item label {
+  font-size: 12px;
+  color: #888;
+  display: block;
+  margin-bottom: 2px;
+}
+.info-item .value {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #fff;
+  border-radius: 8px;
+  width: 520px;
+  max-width: 90%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid #E0E0E0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-header h3 { font-size: 16px; font-weight: 600; }
+.modal-close {
+  font-size: 20px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close:hover { color: #333; }
+.modal-body { padding: 24px; }
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #E0E0E0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Warning Banner */
+.warning-banner {
+  background: #FFF3E0;
+  border: 1px solid #FFB74D;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #E65100;
+}
+.warning-banner .warn-icon { font-size: 18px; flex-shrink: 0; }
+
+/* Change Summary */
+.change-summary {
+  background: #F5F5F5;
+  border-radius: 4px;
+  padding: 12px 16px;
+  margin: 12px 0;
+}
+.change-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #E0E0E0;
+}
+.change-row:last-child { border-bottom: none; }
+.change-row .label { color: #666; }
+.change-row .old-val { color: #999; text-decoration: line-through; }
+.change-row .new-val { color: #0057B8; font-weight: 600; }
+
+/* Toast */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 3000;
+}
+.toast {
+  padding: 14px 20px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 14px;
+  margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.toast-success { background: #388E3C; }
+.toast-error { background: #D32F2F; }
+.toast-info { background: #1565C0; }
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Countdown */
+.countdown-bar {
+  background: #FFF3E0;
+  border: 1px solid #FFB74D;
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+}
+.countdown-bar.active { display: flex; }
+.countdown-bar .timer {
+  font-size: 24px;
+  font-weight: 700;
+  color: #E65100;
+}
+.countdown-bar .timer-text {
+  font-size: 14px;
+  color: #E65100;
+}
+
+/* Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th {
+  background: #F8F9FA;
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+  border-bottom: 2px solid #E0E0E0;
+}
+.data-table td {
+  padding: 12px 14px;
+  font-size: 14px;
+  border-bottom: 1px solid #F0F0F0;
+}
+.data-table tr:hover { background: #F8F9FA; }
+
+/* Tooltip */
+.tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #E0E0E0;
+  color: #666;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: help;
+  position: relative;
+  margin-left: 6px;
+}
+.tooltip-trigger:hover .tooltip-text { display: block; }
+.tooltip-text {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  white-space: nowrap;
+  margin-bottom: 6px;
+  z-index: 100;
+}
+
+/* File upload */
+.file-upload {
+  border: 2px dashed #CCC;
+  border-radius: 6px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.file-upload:hover { border-color: #0057B8; }
+.file-upload .upload-icon { font-size: 32px; color: #999; margin-bottom: 8px; }
+.file-upload .upload-text { font-size: 14px; color: #666; }
+.file-upload .upload-hint { font-size: 12px; color: #999; margin-top: 4px; }
+
+/* Mapping table */
+.mapping-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F0F0;
+}
+.mapping-row:last-child { border-bottom: none; }
+.mapping-row .arrow { color: #999; font-size: 18px; }
+.mapping-row .group-name { font-weight: 500; min-width: 200px; }
+.mapping-row .role-badge {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.role-admin { background: #E3F2FD; color: #1565C0; }
+.role-operator { background: #E8F5E9; color: #2E7D32; }
+.role-viewer { background: #F3E5F5; color: #7B1FA2; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .info-grid { grid-template-columns: 1fr 1fr; }
+  .form-row { flex-direction: column; gap: 0; }
+  .status-panel { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-brand">Brightlayer</div>
+  <a class="header-logout" onclick="showToast('Logged out successfully', 'info')">Logout</a>
+</header>
+
+<!-- Sidebar -->
+<nav class="sidebar">
+  <ul class="sidebar-nav">
+    <li class="active" onclick="showPage('system-settings')"><span class="nav-icon">⚙️</span> System Settings</li>
+    <li onclick="showPage('license')"><span class="nav-icon">🔑</span> License</li>
+    <li onclick="showPage('certificate')"><span class="nav-icon">🔒</span> Certificate</li>
+    <li onclick="showPage('servers')"><span class="nav-icon">🖥️</span> Servers</li>
+    <li onclick="showPage('patches')"><span class="nav-icon">🩹</span> Patches</li>
+    <li onclick="showPage('notifications')"><span class="nav-icon">✉️</span> Notifications</li>
+    <li onclick="showPage('system-monitor')"><span class="nav-icon">📊</span> System Monitor</li>
+    <li onclick="showPage('log-files')"><span class="nav-icon">📄</span> Log Files</li>
+    <li onclick="showPage('reset-password')"><span class="nav-icon">🔑</span> Reset Password</li>
+    <li onclick="showPage('backup-restore')"><span class="nav-icon">💾</span> Backup &amp; Restore</li>
+    <li onclick="showPage('script-runner')"><span class="nav-icon">💻</span> Script Runner</li>
+    <li onclick="showPage('it-capabilities')"><span class="nav-icon">🔧</span> IT Capabilities</li>
+    <li onclick="showPage('app-homepage')"><span class="nav-icon">🏠</span> Application Homepage</li>
+  </ul>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+
+  <!-- Backup & Restore Page (existing page for navigation demo) -->
+  <div class="page" id="page-backup-restore">
+    <div class="page-title">Backup and Restore History</div>
+    <div class="config-card">
+      <div class="config-card-body" style="text-align:right; padding:10px 20px;">
+        <button class="btn btn-secondary">Restore</button>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Host Name</th>
+            <th>Node Type</th>
+            <th>Last Backup</th>
+            <th>Last Restore</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><input type="radio" name="backup-select"></td>
+            <td>BLSS-R9-U5-MODEL</td>
+            <td>All-in-One</td>
+            <td>2026-04-23 02:07:27.355071006 -0400</td>
+            <td>N/A</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Placeholder pages for navigation -->
+  <div class="page active" id="page-system-settings">
+    <div class="page-title">System Settings</div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <button class="btn btn-secondary btn-sm">Disable SSH</button>
+      <button class="btn btn-secondary btn-sm">Disable Firewall Port</button>
+    </div>
+    <div class="config-card">
+      <div class="config-card-header"><h3 style="color:#0057B8;">System Overview</h3></div>
+      <div class="config-card-body">
+        <div style="display:flex;gap:40px;">
+          <div style="flex:1;">
+            <table style="width:100%;font-size:14px;">
+              <tr><td style="padding:6px 0;color:#666;width:160px;">System Version</td><td style="font-weight:500;">EPMS_PRM-7.3.0-2025011613</td></tr>
+              <tr><td style="padding:6px 0;color:#666;">Operation Status</td><td style="color:#388E3C;font-weight:500;">Running</td></tr>
+              <tr><td style="padding:6px 0;color:#666;">Uptime</td><td>153 Days 5 Hours 08 Minutes</td></tr>
+              <tr><td style="padding:6px 0;color:#666;">Current Load Average</td><td>0, 0.05, 0.06</td></tr>
+              <tr><td style="padding:6px 0;color:#666;">Current Users</td><td>0</td></tr>
+              <tr><td style="padding:6px 0;color:#666;">License Status</td><td style="color:#388E3C;">valid</td></tr>
+            </table>
+          </div>
+          <div style="flex:1;">
+            <div style="margin-bottom:8px;font-size:13px;"><span style="color:#666;">Physical Memory Used</span><div style="background:#eee;border-radius:4px;height:16px;margin-top:3px;"><div style="background:#D32F2F;height:100%;border-radius:4px;width:93.8%;"></div></div><span style="font-size:12px;color:#888;">93.8% (18.6GB)</span></div>
+            <div style="margin-bottom:8px;font-size:13px;"><span style="color:#666;">Swap Used</span><div style="background:#eee;border-radius:4px;height:16px;margin-top:3px;"><div style="background:#D32F2F;height:100%;border-radius:4px;width:100%;"></div></div><span style="font-size:12px;color:#888;">100% (8.0GB)</span></div>
+            <div style="margin-bottom:8px;font-size:13px;"><span style="color:#666;">Application File Storage (/opt/VDC)</span><div style="background:#eee;border-radius:4px;height:16px;margin-top:3px;"><div style="background:#1565C0;height:100%;border-radius:4px;width:15.2%;"></div></div><span style="font-size:12px;color:#888;">15.2% (349.9GB)</span></div>
+            <div style="margin-bottom:8px;font-size:13px;"><span style="color:#666;">Database Storage (/usr/local/pgsql)</span><div style="background:#eee;border-radius:4px;height:16px;margin-top:3px;"><div style="background:#1565C0;height:100%;border-radius:4px;width:15.2%;"></div></div><span style="font-size:12px;color:#888;">15.2% (349.9GB)</span></div>
+            <div style="margin-bottom:8px;font-size:13px;"><span style="color:#666;">Root Storage Usage (/)</span><div style="background:#eee;border-radius:4px;height:16px;margin-top:3px;"><div style="background:#1565C0;height:100%;border-radius:4px;width:15.2%;"></div></div><span style="font-size:12px;color:#888;">15.2% (349.9GB)</span></div>
+            <div style="margin-bottom:8px;font-size:13px;"><span style="color:#666;">Boot Storage Usage (/boot)</span><div style="background:#eee;border-radius:4px;height:16px;margin-top:3px;"><div style="background:#1565C0;height:100%;border-radius:4px;width:54.8%;"></div></div><span style="font-size:12px;color:#888;">54.8% (960.0MB)</span></div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:8px;">
+          <button class="btn btn-secondary btn-sm">Stop Process</button>
+          <button class="btn btn-secondary btn-sm">Restart Process</button>
+        </div>
+      </div>
+    </div>
+    <div class="config-card">
+      <div class="config-card-header"><h3 style="color:#0057B8;">Help Eaton Improve the Product</h3></div>
+      <div class="config-card-body">
+        <div class="toggle-wrapper">
+          <span style="font-size:14px;color:#666;">Opt in</span>
+          <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          <span style="font-size:13px;color:#666;">Help Eaton improve its products and services by opting in to sharing anonymized usage data.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- IP Address Configuration -->
+    <div class="config-card">
+      <div class="config-card-header">
+        <h3 style="color:#0057B8;">IP Address Configuration</h3>
+      </div>
+      <div class="config-card-body">
+        <div class="form-group">
+          <label>IP Address</label>
+          <input type="text" id="network-ip" placeholder="e.g., 192.168.1.100" value="192.168.1.100">
+          <div class="error-message" id="ip-error">Invalid IP address format (must be valid IPv4)</div>
+          <div class="help-text">The IP address used to access this server</div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openNetworkChangeModal()">Apply the Change</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('network-ip').value='192.168.1.100'; showToast('Reset to original value.', 'info')">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- URL Configuration -->
+    <div class="config-card">
+      <div class="config-card-header">
+        <h3 style="color:#0057B8;">URL Configuration</h3>
+      </div>
+      <div class="config-card-body">
+        <div class="form-group">
+          <label>URL</label>
+          <input type="text" id="network-url" placeholder="e.g., blss.company.com" value="blss-r9-u5-model.company.local">
+          <div class="error-message" id="url-error">Invalid URL format</div>
+          <div class="help-text">The hostname/domain used to access this server</div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="openUrlChangeModal()">Apply the Change</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('network-url').value='blss-r9-u5-model.company.local'; showToast('Reset to original value.', 'info')">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SSL Certificate (Optional) -->
+    <div class="config-card">
+      <div class="config-card-header">
+        <h3 style="color:#0057B8;">SSL Certificate (Optional)</h3>
+      </div>
+      <div class="config-card-body">
+        <div style="margin-bottom:16px;">
+          <label style="font-size:14px;color:#555;margin-right:16px;">Protocol</label>
+          <label style="cursor:pointer;margin-right:16px;"><input type="radio" name="ssl-protocol" value="http" style="margin-right:4px;">HTTP</label>
+          <label style="cursor:pointer;"><input type="radio" name="ssl-protocol" value="https" checked style="margin-right:4px;">HTTPS</label>
+        </div>
+        <div id="ssl-cert-section">
+          <div style="margin-bottom:16px;">
+            <label style="font-size:14px;color:#555;margin-right:16px;">Type</label>
+            <label style="cursor:pointer;margin-right:16px;"><input type="radio" name="ssl-type" value="self-sign" style="margin-right:4px;" onchange="document.getElementById('ssl-upload-fields').style.display='none';">Self Sign</label>
+            <label style="cursor:pointer;"><input type="radio" name="ssl-type" value="upload" checked style="margin-right:4px;" onchange="document.getElementById('ssl-upload-fields').style.display='block';">Upload Certificate</label>
+          </div>
+          <div id="ssl-upload-fields">
+            <div class="form-group" style="margin-bottom:12px;">
+              <label>Certificate File <span style="color:red;">*</span></label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="cert-file" placeholder="Select certificate file..." readonly style="flex:1;">
+                <button class="btn btn-secondary btn-sm" onclick="showToast('File browser opened...', 'info')">Browse</button>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label>Certificate Key File</label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="cert-key-file" placeholder="Select key file..." readonly style="flex:1;">
+                <button class="btn btn-secondary btn-sm" onclick="showToast('File browser opened...', 'info')">Browse</button>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:12px;">
+              <label>Certificate Chain File</label>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="cert-chain-file" placeholder="Select chain file..." readonly style="flex:1;">
+                <button class="btn btn-secondary btn-sm" onclick="showToast('File browser opened...', 'info')">Browse</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showToast('Certificate submitted successfully.', 'success')">Submit</button>
+          <button class="btn btn-secondary" onclick="showToast('CSR request generated.', 'info')">Generate CSR Request</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session Timeout -->
+    <div class="config-card">
+      <div class="config-card-header">
+        <h3 style="color:#0057B8;">Session Timeout</h3>
+      </div>
+      <div class="config-card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Inactivity Timeout</label>
+            <select id="session-timeout" style="width:100%;padding:8px 12px;border:1px solid #ccc;border-radius:4px;font-size:14px;" onchange="if(this.value==='custom'){document.getElementById('custom-timeout-group').style.display='block';}else{document.getElementById('custom-timeout-group').style.display='none';}">
+              <option value="5">5 minutes</option>
+              <option value="10">10 minutes</option>
+              <option value="15" selected>15 minutes</option>
+              <option value="30">30 minutes</option>
+              <option value="60">60 minutes</option>
+              <option value="custom">Custom...</option>
+            </select>
+            <div class="help-text">Sessions will automatically expire after this period of inactivity</div>
+          </div>
+          <div class="form-group" id="custom-timeout-group" style="display:none;">
+            <label>Custom Timeout (minutes)</label>
+            <input type="number" id="custom-timeout" min="5" max="480" placeholder="5 - 480">
+            <div class="help-text">Minimum: 5 minutes. Maximum: 480 minutes (8 hours)</div>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showToast('Session timeout applied successfully.', 'success')">Apply the Change</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('session-timeout').value='15'; document.getElementById('custom-timeout-group').style.display='none'; showToast('Reset to original values.', 'info')">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Services -->
+    <div class="config-card">
+      <div class="config-card-header">
+        <h3 style="color:#0057B8;">Time Services (NTP)</h3>
+        <span class="badge badge-success" id="ntp-sync-badge">Synchronized</span>
+      </div>
+      <div class="config-card-body">
+        <!-- NTP Status -->
+        <div class="info-grid" style="margin-bottom:16px;">
+          <div class="info-item">
+            <label>Sync Status</label>
+            <div class="value" style="color:#388E3C;">Synchronized</div>
+          </div>
+          <div class="info-item">
+            <label>Current Offset</label>
+            <div class="value">+0.342ms</div>
+          </div>
+          <div class="info-item">
+            <label>Stratum</label>
+            <div class="value">3</div>
+          </div>
+          <div class="info-item">
+            <label>Last Sync</label>
+            <div class="value">2026-05-25 21:15:03</div>
+          </div>
+        </div>
+        <!-- NTP Source Config -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>Primary NTP Source</label>
+            <input type="text" id="ntp-source-primary" placeholder="IP or hostname" value="10.0.0.1">
+            <div class="help-text">IP address or hostname of upstream NTP server</div>
+          </div>
+        </div>
+        <!-- NTP Server Mode -->
+        <div style="margin-top:16px; padding-top:16px; border-top:1px solid #E0E0E0;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <h4 style="font-size:14px;color:#555;margin:0;">NTP Server Mode</h4>
+            <span class="badge badge-warning" id="ntp-server-badge">Disabled</span>
+            <div class="toggle-wrapper">
+              <div class="toggle" id="ntp-server-toggle" onclick="toggleNtpServer()"></div>
+              <span class="toggle-label" id="ntp-server-label">Disabled</span>
+            </div>
+          </div>
+          <p style="font-size:13px; color:#666; margin-bottom:12px;">Enable this server as an NTP time source for connected devices (UPS, PDU, meters, sensors).</p>
+          <div class="form-group" id="ntp-server-config" style="opacity:0.5; pointer-events:none;">
+            <label>Allowed Client Subnets</label>
+            <input type="text" id="ntp-allowed-subnets" placeholder="e.g., 192.168.1.0/24" value="192.168.1.0/24">
+            <div class="help-text">Comma-separated list of subnets allowed to query this NTP server</div>
+          </div>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="testNtpSource()">Test Reachability</button>
+          <button class="btn btn-primary" onclick="saveNtpSource()">Apply NTP Source</button>
+          <button class="btn btn-success btn-sm" onclick="syncNow()" style="margin-left:auto;">⟳ Sync Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page" id="page-license">
+    <div class="page-title">License</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">License management content...</p></div></div>
+  </div>
+  <div class="page" id="page-certificate">
+    <div class="page-title">Certificate</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">Certificate management content...</p></div></div>
+  </div>
+  <div class="page" id="page-servers">
+    <div class="page-title">Servers</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">Servers content...</p></div></div>
+  </div>
+  <div class="page" id="page-patches">
+    <div class="page-title">Patches</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">Patches content...</p></div></div>
+  </div>
+  <div class="page" id="page-notifications">
+    <div class="page-title">Notifications</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">Notifications content...</p></div></div>
+  </div>
+  <div class="page" id="page-system-monitor">
+    <div class="page-title">System Monitor</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">System monitor content...</p></div></div>
+  </div>
+  <div class="page" id="page-log-files">
+    <div class="page-title">Log Files</div>
+    <div class="config-card">
+      <div class="config-card-header"><h3 style="color:#0057B8;">Download Logs</h3></div>
+      <div class="config-card-body">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <button class="btn btn-primary btn-sm" onclick="showToast('Downloading web logs...', 'info')">Download Web Logs</button>
+          <span style="font-size:13px;color:#666;">Download a zip file containing the web log files located in /opt/VDC/tomcat/logs</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+          <button class="btn btn-primary btn-sm" onclick="showToast('Downloading monitor logs...', 'info')">Download Monitor Logs</button>
+          <span style="font-size:13px;color:#666;">Download a zip file containing the monitor log files located in /opt/VDC/monitor/vms/logs</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <button class="btn btn-primary btn-sm" onclick="showToast('Downloading health logs...', 'info')">Download Health Logs</button>
+          <span style="font-size:13px;color:#666;">Download a zip file containing the health monitor log files located in /opt/VDC/vdcmon/logs</span>
+        </div>
+      </div>
+    </div>
+    <div class="config-card">
+      <div class="config-card-header"><h3 style="color:#0057B8;">System Health Check</h3></div>
+      <div class="config-card-body">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <button class="btn btn-primary btn-sm" onclick="showToast('Executing health check tool... Download will start shortly.', 'info')">Execute Healthcheck Tool</button>
+          <span style="font-size:13px;color:#666;">Execute and download the results of vdchealthcheck</span>
+        </div>
+      </div>
+    </div>
+    <div class="config-card">
+      <div class="config-card-header"><h3 style="color:#0057B8;">Troubleshooting</h3></div>
+      <div class="config-card-body">
+        <div style="display:flex;align-items:center;gap:16px;">
+          <button class="btn btn-primary btn-sm" onclick="showToast('Executing diagnostic tool... Download will start shortly.', 'info')">Execute Diagnostic Tool</button>
+          <span style="font-size:13px;color:#666;">Execute and download the results of getsupport</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page" id="page-reset-password">
+    <div class="page-title">Reset Password</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">Reset password content...</p></div></div>
+  </div>
+  <div class="page" id="page-script-runner">
+    <div class="page-title">Script Runner</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">Script runner content...</p></div></div>
+  </div>
+  <div class="page" id="page-it-capabilities">
+    <div class="page-title">IT Capabilities</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">IT capabilities content...</p></div></div>
+  </div>
+  <div class="page" id="page-app-homepage">
+    <div class="page-title">Application Homepage</div>
+    <div class="config-card"><div class="config-card-body"><p style="color:#888;">Application homepage content...</p></div></div>
+  </div>
+</main>
+
+<!-- IP Change Confirmation Modal -->
+<div class="modal-overlay" id="modal-ip-change">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Confirm IP Address Change</h3>
+      <span class="modal-close" onclick="closeModal('modal-ip-change')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px;">You are about to change the server's IP address. This will temporarily disrupt your connection to ServerAdmin.</p>
+      <div class="change-summary">
+        <div class="change-row">
+          <span class="label">IP Address</span>
+          <span class="old-val" id="modal-old-ip">192.168.1.100</span>
+          <span class="new-val" id="modal-new-ip">—</span>
+        </div>
+        <div class="change-row">
+          <span class="label">Subnet Mask</span>
+          <span class="old-val">255.255.255.0</span>
+          <span class="new-val" id="modal-new-subnet">—</span>
+        </div>
+        <div class="change-row">
+          <span class="label">Gateway</span>
+          <span class="old-val">192.168.1.1</span>
+          <span class="new-val" id="modal-new-gateway">—</span>
+        </div>
+      </div>
+      <div class="warning-banner">
+        <span class="warn-icon">⚠️</span>
+        <div>
+          <strong>Auto-revert enabled:</strong> If you do not confirm the change within <strong>60 seconds</strong> at the new IP address, the configuration will automatically revert to the current IP.
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ip-change')">Cancel</button>
+      <button class="btn btn-danger" onclick="applyIpChange()">Apply &amp; Start Timer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Network Change Confirmation Modal -->
+<div class="modal-overlay" id="modal-network-change">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Confirm Network Configuration Change</h3>
+      <span class="modal-close" onclick="closeModal('modal-network-change')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px;">You are about to apply network configuration changes.</p>
+      <div class="change-summary">
+        <div class="change-row">
+          <span class="label">IP Address</span>
+          <span class="new-val" id="modal-network-ip">192.168.1.100 (ens192)</span>
+        </div>
+        <div class="change-row">
+          <span class="label">URL</span>
+          <span class="new-val" id="modal-network-url">https://blss-r9-u5-model.company.local</span>
+        </div>
+      </div>
+      <div class="warning-banner">
+        <span class="warn-icon">⚠️</span>
+        <div>
+          <strong>Applying this change will:</strong>
+          <ul style="margin:6px 0 0 16px;font-size:13px;color:#555;">
+            <li>Restart web services (Tomcat) — active user sessions will be terminated</li>
+            <li>Update TLS certificate bindings if URL changed</li>
+            <li>Temporarily disrupt connectivity (10–30 seconds)</li>
+            <li>Require re-login after services restart</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-network-change')">Cancel</button>
+      <button class="btn btn-danger" onclick="closeModal('modal-network-change'); showToast('Network configuration applied. Services restarting...', 'success')">Confirm &amp; Apply</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hostname Change Confirmation Modal -->
+<div class="modal-overlay" id="modal-hostname-change">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Confirm Hostname Change</h3>
+      <span class="modal-close" onclick="closeModal('modal-hostname-change')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px;">Changing the hostname will affect TLS certificates and require service restarts.</p>
+      <div class="change-summary">
+        <div class="change-row">
+          <span class="label">Hostname</span>
+          <span class="old-val" id="modal-old-hostname">BLSS-R9-U5-MODEL</span>
+          <span class="new-val" id="modal-new-hostname">—</span>
+        </div>
+      </div>
+      <div class="warning-banner">
+        <span class="warn-icon">⚠️</span>
+        <div>
+          <strong>Impact:</strong> TLS certificates bound to the current hostname will become invalid. 
+          Services will be restarted after the change. Plan for brief service interruption (~30 seconds).
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-hostname-change')">Cancel</button>
+      <button class="btn btn-danger" onclick="applyHostnameChange()">Apply Hostname Change</button>
+    </div>
+  </div>
+</div>
+
+<!-- LDAP Mapping Remove Modal -->
+<div class="modal-overlay" id="modal-ldap-remove">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Remove Group Mapping</h3>
+      <span class="modal-close" onclick="closeModal('modal-ldap-remove')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to remove this LDAP group mapping? Users in this group will lose their assigned role on next login.</p>
+      <div class="change-summary" id="ldap-remove-summary"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-ldap-remove')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmRemoveLdapMapping()">Remove Mapping</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// === Navigation ===
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-nav li').forEach(l => l.classList.remove('active'));
+  
+  const page = document.getElementById('page-' + pageId);
+  if (page) page.classList.add('active');
+  
+  const navItems = document.querySelectorAll('.sidebar-nav li');
+  navItems.forEach(item => {
+    if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(pageId)) {
+      item.classList.add('active');
+    }
+  });
+}
+
+// === Tabs ===
+function switchTab(tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  
+  document.getElementById('tab-' + tabId).classList.add('active');
+  
+  const tabs = document.querySelectorAll('.tab');
+  tabs.forEach(t => {
+    if (t.getAttribute('onclick') && t.getAttribute('onclick').includes(tabId)) {
+      t.classList.add('active');
+    }
+  });
+}
+
+// === Toast ===
+function showToast(message, type) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast toast-' + (type || 'success');
+  toast.innerHTML = message;
+  container.appendChild(toast);
+  setTimeout(() => { toast.remove(); }, 4000);
+}
+
+// === Modal ===
+function openModal(modalId) {
+  document.getElementById(modalId).classList.add('active');
+}
+function closeModal(modalId) {
+  document.getElementById(modalId).classList.remove('active');
+}
+
+// === Network Change (IP) ===
+function openNetworkChangeModal() {
+  const ip = document.getElementById('network-ip').value.trim();
+  const ipPattern = /^((25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(25[0-5]|2[0-4]\d|[01]?\d\d?)$/;
+  
+  if (!ip || !ipPattern.test(ip)) {
+    document.getElementById('network-ip').classList.add('error');
+    document.getElementById('ip-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('network-ip').classList.remove('error');
+  document.getElementById('ip-error').style.display = 'none';
+  
+  document.getElementById('modal-network-ip').textContent = ip;
+  document.getElementById('modal-network-url').textContent = '-';
+  openModal('modal-network-change');
+}
+
+// === URL Change ===
+function openUrlChangeModal() {
+  const url = document.getElementById('network-url').value.trim();
+  const urlPattern = /^[a-zA-Z0-9]([a-zA-Z0-9\-\.]*[a-zA-Z0-9])?(:\d+)?(\/.*)?$/;
+  
+  if (!url || !urlPattern.test(url)) {
+    document.getElementById('network-url').classList.add('error');
+    document.getElementById('url-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('network-url').classList.remove('error');
+  document.getElementById('url-error').style.display = 'none';
+  
+  document.getElementById('modal-network-ip').textContent = '-';
+  document.getElementById('modal-network-url').textContent = url;
+  openModal('modal-network-change');
+}
+
+// === IP Change ===
+function openIpChangeModal() {
+  const newIp = document.getElementById('new-ip').value.trim();
+  const newSubnet = document.getElementById('new-subnet').value.trim();
+  const newGw = document.getElementById('new-gateway').value.trim();
+  
+  if (!validateIp(newIp)) {
+    document.getElementById('new-ip').classList.add('error');
+    document.getElementById('ip-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('new-ip').classList.remove('error');
+  document.getElementById('ip-error').style.display = 'none';
+  
+  document.getElementById('modal-new-ip').textContent = newIp || '—';
+  document.getElementById('modal-new-subnet').textContent = newSubnet || '—';
+  document.getElementById('modal-new-gateway').textContent = newGw || '—';
+  openModal('modal-ip-change');
+}
+
+let countdownInterval = null;
+function applyIpChange() {
+  closeModal('modal-ip-change');
+  const newIp = document.getElementById('new-ip').value.trim();
+  
+  // Show countdown bar
+  const bar = document.getElementById('ip-countdown');
+  bar.classList.add('active');
+  let seconds = 60;
+  document.getElementById('countdown-timer').textContent = seconds;
+  
+  countdownInterval = setInterval(() => {
+    seconds--;
+    document.getElementById('countdown-timer').textContent = seconds;
+    if (seconds <= 0) {
+      clearInterval(countdownInterval);
+      bar.classList.remove('active');
+      showToast('⚠️ IP change reverted — confirmation timeout expired', 'error');
+    }
+  }, 1000);
+  
+  showToast('IP address change applied. Confirm within 60 seconds.', 'info');
+}
+
+function confirmIpChange() {
+  clearInterval(countdownInterval);
+  document.getElementById('ip-countdown').classList.remove('active');
+  const newIp = document.getElementById('new-ip').value.trim();
+  document.getElementById('current-ip').textContent = newIp;
+  document.getElementById('new-ip').value = '';
+  showToast('✓ IP address change confirmed and applied successfully', 'success');
+}
+
+// === Hostname Change ===
+function openHostnameChangeModal() {
+  const newHostname = document.getElementById('new-hostname').value.trim();
+  
+  if (!validateHostname(newHostname)) {
+    document.getElementById('new-hostname').classList.add('error');
+    document.getElementById('hostname-error').style.display = 'block';
+    return;
+  }
+  document.getElementById('new-hostname').classList.remove('error');
+  document.getElementById('hostname-error').style.display = 'none';
+  
+  document.getElementById('modal-new-hostname').textContent = newHostname;
+  openModal('modal-hostname-change');
+}
+
+function applyHostnameChange() {
+  closeModal('modal-hostname-change');
+  const newHostname = document.getElementById('new-hostname').value.trim();
+  document.getElementById('current-hostname').textContent = newHostname;
+  document.getElementById('new-hostname').value = '';
+  showToast('✓ Hostname changed successfully. Services restarting...', 'success');
+  setTimeout(() => showToast('All services restarted successfully', 'success'), 2000);
+}
+
+// === SAML ===
+function toggleSaml() {
+  const toggle = document.getElementById('saml-toggle');
+  toggle.classList.toggle('active');
+  const isActive = toggle.classList.contains('active');
+  document.getElementById('saml-toggle-label').textContent = isActive ? 'Enabled' : 'Disabled';
+  document.getElementById('saml-status-badge').textContent = isActive ? 'Enabled' : 'Disabled';
+  document.getElementById('saml-status-badge').className = 'badge ' + (isActive ? 'badge-success' : 'badge-warning');
+}
+
+function toggleMetadataInput() {
+  const source = document.getElementById('saml-metadata-source').value;
+  document.getElementById('metadata-url-group').style.display = source === 'url' ? 'block' : 'none';
+  document.getElementById('metadata-file-group').style.display = source === 'file' ? 'block' : 'none';
+}
+
+function testSamlConfig() {
+  showToast('🔄 Testing SAML configuration...', 'info');
+  setTimeout(() => {
+    showToast('✓ SAML configuration test passed — IdP metadata valid, certificate verified', 'success');
+  }, 1500);
+}
+
+function saveSamlConfig() {
+  showToast('✓ SAML configuration saved successfully', 'success');
+}
+
+// === LDAP ===
+let pendingRemoveEl = null;
+
+function searchLdapGroups() {
+  const query = document.getElementById('ldap-group-search').value;
+  const results = document.getElementById('ldap-search-results');
+  
+  if (query.length < 2) {
+    results.style.display = 'none';
+    return;
+  }
+  
+  const mockGroups = [
+    'CN=BLSS-PowerUsers,OU=Groups,DC=company,DC=local',
+    'CN=BLSS-ReadOnly,OU=Groups,DC=company,DC=local',
+    'CN=BLSS-ServiceTeam,OU=Groups,DC=company,DC=local',
+    'CN=IT-NetworkAdmins,OU=Groups,DC=company,DC=local',
+    'CN=Facility-Managers,OU=Groups,DC=company,DC=local'
+  ];
+  
+  const filtered = mockGroups.filter(g => g.toLowerCase().includes(query.toLowerCase()));
+  
+  if (filtered.length > 0) {
+    results.style.display = 'block';
+    results.innerHTML = filtered.map(g => 
+      '<div style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid #F0F0F0;" onmouseover="this.style.background=\'#F0F8FF\'" onmouseout="this.style.background=\'#fff\'" onclick="selectLdapGroup(\'' + g + '\')">' + g + '</div>'
+    ).join('');
+  } else {
+    results.style.display = 'block';
+    results.innerHTML = '<div style="padding:8px 12px;color:#888;font-size:13px;">No groups found</div>';
+  }
+}
+
+function selectLdapGroup(group) {
+  document.getElementById('ldap-group-search').value = group;
+  document.getElementById('ldap-search-results').style.display = 'none';
+}
+
+function addLdapMapping() {
+  const group = document.getElementById('ldap-group-search').value.trim();
+  const role = document.getElementById('ldap-new-role').value;
+  
+  if (!group || !role) {
+    showToast('Please select a group and role', 'error');
+    return;
+  }
+  
+  const roleLabels = { admin: 'Administrator', operator: 'Operator', viewer: 'Viewer' };
+  const roleClasses = { admin: 'role-admin', operator: 'role-operator', viewer: 'role-viewer' };
+  
+  const container = document.getElementById('ldap-mappings');
+  const row = document.createElement('div');
+  row.className = 'mapping-row';
+  row.innerHTML = '<span class="group-name">' + group + '</span><span class="arrow">→</span><span class="role-badge ' + roleClasses[role] + '">' + roleLabels[role] + '</span><button class="btn btn-sm btn-secondary" onclick="removeLdapMapping(this)" style="margin-left:auto;">Remove</button>';
+  container.appendChild(row);
+  
+  document.getElementById('ldap-group-search').value = '';
+  document.getElementById('ldap-new-role').value = '';
+  showToast('✓ LDAP group mapping added successfully', 'success');
+}
+
+function removeLdapMapping(btn) {
+  pendingRemoveEl = btn.closest('.mapping-row');
+  const group = pendingRemoveEl.querySelector('.group-name').textContent;
+  const role = pendingRemoveEl.querySelector('.role-badge').textContent;
+  
+  document.getElementById('ldap-remove-summary').innerHTML = '<div class="change-row"><span class="label">Group</span><span class="new-val">' + group + '</span></div><div class="change-row"><span class="label">Role</span><span class="new-val">' + role + '</span></div>';
+  openModal('modal-ldap-remove');
+}
+
+function confirmRemoveLdapMapping() {
+  if (pendingRemoveEl) {
+    pendingRemoveEl.remove();
+    pendingRemoveEl = null;
+  }
+  closeModal('modal-ldap-remove');
+  showToast('✓ LDAP group mapping removed', 'success');
+}
+
+// === Session Timeout ===
+document.getElementById('session-timeout').addEventListener('change', function() {
+  document.getElementById('custom-timeout-group').style.display = this.value === 'custom' ? 'block' : 'none';
+});
+
+function saveSessionTimeout() {
+  const sel = document.getElementById('session-timeout');
+  let value = sel.value;
+  if (value === 'custom') {
+    value = document.getElementById('custom-timeout').value;
+    if (!value || value < 5 || value > 480) {
+      showToast('Custom timeout must be between 5 and 480 minutes', 'error');
+      return;
+    }
+  }
+  showToast('✓ Session timeout updated to ' + value + ' minutes', 'success');
+}
+
+// === NTP ===
+function toggleNtpServer() {
+  const toggle = document.getElementById('ntp-server-toggle');
+  toggle.classList.toggle('active');
+  const isActive = toggle.classList.contains('active');
+  
+  document.getElementById('ntp-server-label').textContent = isActive ? 'Enabled' : 'Disabled';
+  document.getElementById('ntp-server-badge').textContent = isActive ? 'Active' : 'Disabled';
+  document.getElementById('ntp-server-badge').className = 'badge ' + (isActive ? 'badge-success' : 'badge-warning');
+  document.getElementById('ntp-server-config').style.opacity = isActive ? '1' : '0.5';
+  document.getElementById('ntp-server-config').style.pointerEvents = isActive ? 'auto' : 'none';
+  document.getElementById('ntp-firewall-warning').style.display = isActive ? 'flex' : 'none';
+  document.getElementById('ntp-clients-section').style.display = isActive ? 'block' : 'none';
+  document.getElementById('ntp-server-save-btn').disabled = !isActive;
+}
+
+function testNtpSource() {
+  const source = document.getElementById('ntp-source-primary').value.trim();
+  if (!source) {
+    showToast('Please enter an NTP source address', 'error');
+    return;
+  }
+  showToast('🔄 Testing NTP source reachability...', 'info');
+  setTimeout(() => {
+    showToast('✓ NTP source ' + source + ' is reachable (offset: +1.234ms, stratum 2)', 'success');
+  }, 1500);
+}
+
+function saveNtpSource() {
+  const source = document.getElementById('ntp-source-primary').value.trim();
+  if (!source) {
+    showToast('Please enter a primary NTP source', 'error');
+    return;
+  }
+  showToast('✓ NTP upstream source configured: ' + source, 'success');
+}
+
+function saveNtpServerConfig() {
+  showToast('✓ NTP server configuration saved. UDP port 123 now accepting connections.', 'success');
+}
+
+function syncNow() {
+  showToast('🔄 Forcing time synchronization...', 'info');
+  setTimeout(() => {
+    document.getElementById('ntp-offset').textContent = '+0.012ms';
+    document.getElementById('ntp-last-sync').textContent = new Date().toISOString().slice(0,19).replace('T',' ');
+    showToast('✓ Time synchronized successfully. Offset: +0.012ms', 'success');
+  }, 1500);
+}
+
+// === Validation Helpers ===
+function validateIp(ip) {
+  if (!ip) return false;
+  const parts = ip.split('.');
+  if (parts.length !== 4) return false;
+  return parts.every(p => {
+    const num = parseInt(p, 10);
+    return !isNaN(num) && num >= 0 && num <= 255 && String(num) === p;
+  });
+}
+
+function validateHostname(hostname) {
+  if (!hostname) return false;
+  if (hostname.length > 63) return false;
+  return /^[a-zA-Z0-9]([a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(hostname);
+}
+
+// === Input validation on blur ===
+document.getElementById('new-ip').addEventListener('blur', function() {
+  if (this.value && !validateIp(this.value)) {
+    this.classList.add('error');
+    document.getElementById('ip-error').style.display = 'block';
+  } else {
+    this.classList.remove('error');
+    document.getElementById('ip-error').style.display = 'none';
+  }
+});
+
+document.getElementById('new-hostname').addEventListener('blur', function() {
+  if (this.value && !validateHostname(this.value)) {
+    this.classList.add('error');
+    document.getElementById('hostname-error').style.display = 'block';
+  } else {
+    this.classList.remove('error');
+    document.getElementById('hostname-error').style.display = 'none';
+  }
+});
+</script>
+</body>
+</html>

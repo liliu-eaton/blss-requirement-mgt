@@ -1,0 +1,1313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BLSS - Group & Model Trigger Management Prototype</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; background: #F4F5F7; overflow: hidden; height: 100vh; }
+
+/* Header */
+.header { height: 56px; background: linear-gradient(90deg, #0057B8, #003C7E); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.header-logo { color: #fff; font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+.header-logo span { color: #00C8FF; }
+.header-icons { display: flex; align-items: center; gap: 8px; }
+.header-icon { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; cursor: pointer; position: relative; }
+.header-icon .badge { position: absolute; top: -2px; right: -2px; width: 16px; height: 16px; border-radius: 50%; background: #E53935; color: #fff; font-size: 9px; display: flex; align-items: center; justify-content: center; }
+.header-user { color: #fff; font-size: 13px; margin-left: 8px; }
+
+/* Demo Banner */
+.demo-banner { height: 28px; background: #FFA726; color: #333; font-size: 12px; display: flex; align-items: center; justify-content: center; position: fixed; top: 56px; left: 0; right: 0; z-index: 999; }
+
+/* Sidebar */
+.sidebar { width: 240px; background: #1A2138; position: fixed; top: 84px; left: 0; bottom: 0; overflow-y: auto; z-index: 998; }
+.sidebar::-webkit-scrollbar { width: 6px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+.nav-item { display: flex; align-items: center; padding: 10px 16px; color: #B0BEC5; font-size: 13px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+.nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.nav-item.active { background: rgba(0,200,255,0.1); color: #00C8FF; border-left-color: #00C8FF; }
+.nav-item .nav-icon { width: 20px; height: 20px; margin-right: 12px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.nav-item .nav-expand { margin-left: auto; font-size: 10px; transition: transform 0.2s; }
+.nav-item .nav-expand.open { transform: rotate(180deg); }
+.nav-sub { overflow: hidden; transition: max-height 0.3s; }
+.nav-sub .nav-item { padding-left: 48px; font-size: 12px; border-left: none; }
+.nav-section-label { padding: 16px 16px 4px; color: #607D8B; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+
+/* Main Content */
+.main { margin-left: 240px; margin-top: 84px; height: calc(100vh - 84px); overflow-y: auto; }
+.page { display: none; padding: 0; }
+.page.active { display: block; }
+
+/* Page Header */
+.page-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: #fff; border-bottom: 1px solid #E0E0E0; position: sticky; top: 0; z-index: 10; }
+.page-header h1 { font-size: 18px; font-weight: 600; color: #263238; }
+.page-header .breadcrumb { font-size: 12px; color: #607D8B; margin-bottom: 4px; }
+.page-header .breadcrumb a { color: #0057B8; text-decoration: none; }
+.page-header-actions { display: flex; gap: 8px; }
+
+/* Buttons */
+.btn { padding: 8px 16px; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+.btn-primary { background: #0057B8; color: #fff; }
+.btn-primary:hover { background: #004494; }
+.btn-secondary { background: #fff; color: #0057B8; border: 1px solid #0057B8; }
+.btn-secondary:hover { background: #E3F2FD; }
+.btn-danger { background: #E53935; color: #fff; }
+.btn-danger:hover { background: #C62828; }
+.btn-text { background: transparent; color: #607D8B; }
+.btn-text:hover { background: #F5F5F5; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Tabs */
+.tabs { display: flex; border-bottom: 2px solid #E0E0E0; padding: 0 24px; background: #fff; }
+.tab { padding: 12px 20px; font-size: 13px; font-weight: 500; color: #607D8B; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; }
+.tab:hover { color: #263238; }
+.tab.active { color: #0057B8; border-bottom-color: #0057B8; }
+
+/* Cards */
+.content-area { padding: 24px; }
+.card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 16px; }
+.card-header { padding: 16px 20px; border-bottom: 1px solid #F0F0F0; display: flex; align-items: center; justify-content: space-between; }
+.card-header h3 { font-size: 14px; font-weight: 600; color: #263238; }
+.card-body { padding: 20px; }
+
+/* Table */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; color: #607D8B; background: #FAFAFA; border-bottom: 1px solid #E0E0E0; }
+.data-table td { padding: 12px 16px; font-size: 13px; color: #37474F; border-bottom: 1px solid #F0F0F0; }
+.data-table tr:hover { background: #F8FAFC; }
+.data-table .source-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 500; }
+.source-badge.device { background: #E3F2FD; color: #1565C0; }
+.source-badge.group { background: #E8F5E9; color: #2E7D32; }
+.source-badge.model { background: #F3E5F5; color: #6A1B9A; }
+.source-badge.rule { background: #FFF3E0; color: #E65100; }
+
+/* Toggle */
+.toggle { width: 36px; height: 20px; border-radius: 10px; background: #CFD8DC; position: relative; cursor: pointer; transition: background 0.2s; }
+.toggle.on { background: #0057B8; }
+.toggle::after { content: ''; width: 16px; height: 16px; border-radius: 50%; background: #fff; position: absolute; top: 2px; left: 2px; transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.toggle.on::after { transform: translateX(16px); }
+
+/* Form */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 12px; font-weight: 500; color: #455A64; margin-bottom: 4px; }
+.form-label .required { color: #E53935; }
+.form-input, .form-select { width: 100%; padding: 8px 12px; border: 1px solid #CFD8DC; border-radius: 4px; font-size: 13px; color: #263238; background: #fff; transition: border-color 0.2s; }
+.form-input:focus, .form-select:focus { outline: none; border-color: #0057B8; box-shadow: 0 0 0 2px rgba(0,87,184,0.1); }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+.modal-overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 8px; width: 520px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+.modal-header { padding: 16px 20px; border-bottom: 1px solid #E0E0E0; display: flex; align-items: center; justify-content: space-between; }
+.modal-header h2 { font-size: 16px; font-weight: 600; color: #263238; }
+.modal-close { width: 28px; height: 28px; border-radius: 50%; border: none; background: transparent; cursor: pointer; font-size: 18px; color: #607D8B; display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: #F5F5F5; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 12px 20px; border-top: 1px solid #E0E0E0; display: flex; justify-content: flex-end; gap: 8px; }
+
+/* Toast */
+.toast-container { position: fixed; top: 100px; right: 24px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; }
+.toast { padding: 12px 20px; border-radius: 6px; font-size: 13px; color: #fff; display: flex; align-items: center; gap: 8px; animation: slideIn 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.15); min-width: 300px; }
+.toast.success { background: #2E7D32; }
+.toast.error { background: #C62828; }
+.toast.info { background: #1565C0; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+/* Empty State */
+.empty-state { text-align: center; padding: 60px 24px; color: #90A4AE; }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+.empty-state h3 { font-size: 16px; color: #607D8B; margin-bottom: 8px; }
+.empty-state p { font-size: 13px; margin-bottom: 16px; }
+
+/* Chip/Tag */
+.chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 500; gap: 4px; }
+.chip-info { background: #E3F2FD; color: #1565C0; }
+.chip-success { background: #E8F5E9; color: #2E7D32; }
+.chip-warning { background: #FFF3E0; color: #E65100; }
+
+/* Tooltip */
+.tooltip-wrap { position: relative; display: inline-flex; }
+.tooltip-wrap .tooltip { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #263238; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 11px; white-space: nowrap; margin-bottom: 6px; z-index: 100; }
+.tooltip-wrap:hover .tooltip { display: block; }
+
+/* Progress indicator */
+.progress-bar { width: 100%; height: 4px; background: #E0E0E0; border-radius: 2px; overflow: hidden; }
+.progress-bar .progress-fill { height: 100%; background: #0057B8; border-radius: 2px; transition: width 0.5s ease; }
+
+/* Warning box */
+.warning-box { background: #FFF8E1; border: 1px solid #FFE082; border-radius: 6px; padding: 12px 16px; display: flex; align-items: flex-start; gap: 10px; margin: 12px 0; }
+.warning-box .warn-icon { color: #F57C00; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.warning-box p { font-size: 12px; color: #5D4037; }
+
+/* Info summary */
+.info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+.info-item { background: #F8FAFC; border-radius: 6px; padding: 12px 16px; }
+.info-item .info-label { font-size: 11px; color: #607D8B; text-transform: uppercase; margin-bottom: 4px; }
+.info-item .info-value { font-size: 18px; font-weight: 600; color: #263238; }
+
+/* Device list / group selector */
+.group-selector { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+.group-chip { padding: 6px 12px; border-radius: 16px; border: 1px solid #CFD8DC; font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
+.group-chip:hover { border-color: #0057B8; background: #E3F2FD; }
+.group-chip.selected { background: #0057B8; color: #fff; border-color: #0057B8; }
+.group-chip .chip-remove { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+
+/* Severity indicators */
+.severity { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; }
+.severity-dot { width: 8px; height: 8px; border-radius: 50%; }
+.severity-critical .severity-dot { background: #D32F2F; }
+.severity-critical { color: #D32F2F; }
+.severity-major .severity-dot { background: #F57C00; }
+.severity-major { color: #F57C00; }
+.severity-minor .severity-dot { background: #FBC02D; }
+.severity-minor { color: #FBC02D; }
+.severity-info .severity-dot { background: #1976D2; }
+.severity-info { color: #1976D2; }
+
+/* Action menu */
+.action-btn { width: 28px; height: 28px; border-radius: 4px; border: none; background: transparent; cursor: pointer; color: #607D8B; display: flex; align-items: center; justify-content: center; }
+.action-btn:hover { background: #F0F0F0; }
+
+/* Override indicator */
+.override-hint { font-size: 11px; color: #90A4AE; font-style: italic; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .sidebar { width: 56px; }
+  .sidebar .nav-item span, .sidebar .nav-expand { display: none; }
+  .sidebar .nav-sub .nav-item { padding-left: 16px; }
+  .main { margin-left: 56px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">E<span>.</span>A<span>.</span>T<span>.</span>O<span>.</span>N<span>.</span></div>
+  </div>
+  <div class="header-icons">
+    <div class="header-icon"><span>🌐</span></div>
+    <div class="header-icon"><span>⭐</span></div>
+    <div class="header-icon"><span>🏠</span></div>
+    <div class="header-icon"><span>⚡</span></div>
+    <div class="header-icon"><span>🔔</span><span class="badge">3</span></div>
+    <div class="header-icon"><span>⚠</span><span class="badge">1</span></div>
+    <div class="header-icon"><span>📋</span></div>
+    <div class="header-icon"><span>👤</span></div>
+    <span class="header-user">admin admin</span>
+    <div class="header-icon"><span>🔍</span></div>
+    <div class="header-icon"><span>❓</span></div>
+  </div>
+</div>
+
+<!-- Demo Banner -->
+<div class="demo-banner">⚠ This is a Demo copy of the software licensed for company Eaton. This instance is not licensed for production use.</div>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🏠</span><span>Home</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">📊</span><span>Data Analysis</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">⚡</span><span>One Line Diagrams</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">📈</span><span>Power Quality Analyze</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🔔</span><span>Alarms</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">📅</span><span>Calendar</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🔑</span><span>Rights Access</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" id="nav-groups" onclick="toggleNav('groups-sub'); navigateTo('groups')"><span class="nav-icon">👥</span><span>Groups</span><span class="nav-expand" id="groups-expand">▾</span></div>
+  <div class="nav-sub" id="groups-sub" style="max-height:0">
+    <div class="nav-item" onclick="navigateTo('group-detail')"><span>Device Groups</span></div>
+  </div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🖥</span><span>Devices</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">💻</span><span>IT Devices</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🛡</span><span>Security Control</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🔧</span><span>Maintenance</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">⚙</span><span>Automations</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🗄</span><span>Racks</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🔗</span><span>Connections</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🔍</span><span>Discovery</span></div>
+  <div class="nav-item" id="nav-monitoring" onclick="toggleNav('monitoring-sub')"><span class="nav-icon">📡</span><span>Monitoring</span><span class="nav-expand open" id="monitoring-expand">▾</span></div>
+  <div class="nav-sub" id="monitoring-sub" style="max-height:500px">
+    <div class="nav-item" onclick="navigateTo('home')"><span>Monitoring Templates</span></div>
+    <div class="nav-item active" id="nav-triggers" onclick="navigateTo('triggers')"><span>Triggers</span></div>
+    <div class="nav-item" onclick="navigateTo('trigger-rules')"><span>Trigger Rules</span></div>
+    <div class="nav-item" onclick="navigateTo('home')"><span>Actions</span></div>
+    <div class="nav-item" onclick="navigateTo('home')"><span>Probes</span></div>
+    <div class="nav-item" onclick="navigateTo('home')"><span>Remote Data Gateway</span></div>
+    <div class="nav-item" onclick="navigateTo('home')"><span>CSV Mapping</span></div>
+    <div class="nav-item" onclick="navigateTo('home')"><span>Data Mapping</span></div>
+    <div class="nav-item" onclick="navigateTo('home')"><span>MIB Browser</span></div>
+    <div class="nav-item" onclick="navigateTo('home')"><span>Script Management</span></div>
+  </div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">⇄</span><span>Workflow</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">🔌</span><span>Integrations</span><span class="nav-expand">▾</span></div>
+  <div class="nav-item" onclick="navigateTo('home')"><span class="nav-icon">📥</span><span>Import | Export</span><span class="nav-expand">▾</span></div>
+</div>
+
+<!-- Main Content -->
+<div class="main">
+
+  <!-- Page: Triggers List (existing) -->
+  <div class="page active" id="page-triggers">
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb"><a href="#" onclick="navigateTo('home')">Home</a> / Monitoring / Triggers</div>
+        <h1>Triggers</h1>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn btn-primary" onclick="navigateTo('new-trigger')">+ New Trigger</button>
+      </div>
+    </div>
+    <!-- Tabs for trigger scope -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTriggersTab('all')">All Triggers</div>
+      <div class="tab" onclick="switchTriggersTab('device')">Device-Level</div>
+      <div class="tab" onclick="switchTriggersTab('group')">Group-Level</div>
+      <div class="tab" onclick="switchTriggersTab('model')">Model-Level</div>
+    </div>
+    <div class="content-area">
+      <div class="info-grid">
+        <div class="info-item"><div class="info-label">Total Triggers</div><div class="info-value">47</div></div>
+        <div class="info-item"><div class="info-label">Group-Level</div><div class="info-value">8</div></div>
+        <div class="info-item"><div class="info-label">Model-Level</div><div class="info-value">5</div></div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <h3>All Triggers</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="form-input" style="width:240px" placeholder="Search triggers..." />
+          </div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Attribute</th>
+                <th>Condition</th>
+                <th>Scope</th>
+                <th>Target</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>High Temperature Alert</strong></td>
+                <td>Temperature (°F)</td>
+                <td>> 85</td>
+                <td><span class="source-badge group">● Group</span></td>
+                <td>UPS Rackmounts – Closet A</td>
+                <td><span class="severity severity-major"><span class="severity-dot"></span>Major</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td><button class="action-btn" onclick="openEditTriggerModal()">✏</button><button class="action-btn">🗑</button></td>
+              </tr>
+              <tr>
+                <td><strong>Low Voltage Warning</strong></td>
+                <td>Voltage (V)</td>
+                <td>&lt; 110</td>
+                <td><span class="source-badge model">● Model</span></td>
+                <td>M2 Card (all devices)</td>
+                <td><span class="severity severity-critical"><span class="severity-dot"></span>Critical</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td><button class="action-btn" onclick="openEditTriggerModal()">✏</button><button class="action-btn">🗑</button></td>
+              </tr>
+              <tr>
+                <td><strong>Humidity Threshold</strong></td>
+                <td>Humidity (%)</td>
+                <td>> 70</td>
+                <td><span class="source-badge rule">● Rule</span></td>
+                <td>Closet A, Closet B (Rule)</td>
+                <td><span class="severity severity-minor"><span class="severity-dot"></span>Minor</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td><button class="action-btn" onclick="openEditTriggerModal()">✏</button><button class="action-btn">🗑</button></td>
+              </tr>
+              <tr>
+                <td><strong>UPS Battery Low</strong></td>
+                <td>Battery Level (%)</td>
+                <td>&lt; 20</td>
+                <td><span class="source-badge device">● Device</span></td>
+                <td>UPS-RACK-017</td>
+                <td><span class="severity severity-critical"><span class="severity-dot"></span>Critical</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td><button class="action-btn" onclick="openEditTriggerModal()">✏</button><button class="action-btn">🗑</button></td>
+              </tr>
+              <tr>
+                <td><strong>Input Frequency Drift</strong></td>
+                <td>Input Frequency (Hz)</td>
+                <td>&lt; 59.5</td>
+                <td><span class="source-badge device">● Device</span></td>
+                <td>Joan Modbus device 0429(1)</td>
+                <td><span class="severity severity-info"><span class="severity-dot"></span>Info</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td><button class="action-btn" onclick="openEditTriggerModal()">✏</button><button class="action-btn">🗑</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: New Trigger (enhanced with Type selector) -->
+  <div class="page" id="page-new-trigger">
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb"><a href="#" onclick="navigateTo('triggers')">Triggers</a> / New Trigger</div>
+        <h1>New Trigger</h1>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn btn-secondary" onclick="navigateTo('triggers')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitNewTrigger()">Submit</button>
+        <button class="btn btn-primary" onclick="submitNewTrigger()">Submit & New</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div class="card">
+        <div class="card-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label"><span class="required">*</span> Name</label>
+              <input class="form-input" id="trigger-name" placeholder="Enter trigger name" />
+            </div>
+            <div class="form-group">
+              <label class="form-label"><span class="required">*</span> Severity</label>
+              <select class="form-select" id="trigger-severity">
+                <option value="">Search...</option>
+                <option>Critical</option>
+                <option>Major</option>
+                <option>Minor</option>
+                <option>Info</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label"><span class="required">*</span> Type</label>
+              <select class="form-select" id="trigger-type" onchange="onTriggerTypeChange()">
+                <option value="device">Device</option>
+                <option value="group">Device Group</option>
+                <option value="model">Model</option>
+              </select>
+            </div>
+            <div class="form-group" id="device-selector-group">
+              <label class="form-label"><span class="required">*</span> Device</label>
+              <select class="form-select">
+                <option value="">Search device...</option>
+                <option>Joan Modbus device 0429(1)</option>
+                <option>UPS-RACK-001</option>
+                <option>UPS-RACK-017</option>
+                <option>PDU-Floor2-A</option>
+              </select>
+            </div>
+            <div class="form-group" id="group-selector-group" style="display:none">
+              <label class="form-label"><span class="required">*</span> Device Group</label>
+              <select class="form-select">
+                <option value="">Search group...</option>
+                <option>UPS Rackmounts – Closet A (25 devices)</option>
+                <option>UPS Rackmounts – Closet B (18 devices)</option>
+                <option>PDU Fleet – Floor 2 (32 devices)</option>
+                <option>Network Switches – DC1 (12 devices)</option>
+                <option>M2 Cards – All (200 devices)</option>
+              </select>
+            </div>
+            <div class="form-group" id="model-selector-group" style="display:none">
+              <label class="form-label"><span class="required">*</span> Model</label>
+              <select class="form-select">
+                <option value="">Search model...</option>
+                <option>M2 Card (200 devices)</option>
+                <option>UPS Rackmount 5kVA (45 devices)</option>
+                <option>Eaton 9PX (30 devices)</option>
+                <option>ePDU G3 (52 devices)</option>
+                <option>Network-M2 (15 devices)</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Min Time On (s)</label>
+              <input class="form-input" type="number" placeholder="0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Min Time Off (s)</label>
+              <input class="form-input" type="number" placeholder="0" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Latch Alarm</label>
+            <div class="toggle" onclick="this.classList.toggle('on')"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label"><span class="required">*</span> Rules</label>
+            <div style="border:1px solid #CFD8DC; border-radius:4px; padding:12px;">
+              <div class="form-row" style="margin-bottom:8px">
+                <select class="form-select"><option>Search attribute...</option><option>Temperature (°F)</option><option>Humidity (%)</option><option>Voltage (V)</option><option>Current (A)</option><option>Battery Level (%)</option><option>Input Frequency (Hz)</option></select>
+                <select class="form-select"><option>Search condition...</option><option>> (Greater than)</option><option>&lt; (Less than)</option><option>>= (Greater or equal)</option><option>&lt;= (Less or equal)</option><option>= (Equal)</option><option>!= (Not equal)</option></select>
+              </div>
+              <input class="form-input" placeholder="Threshold value" style="width:200px" />
+              <div style="margin-top:8px; display:flex; gap:4px; justify-content:flex-end">
+                <button class="btn btn-sm btn-secondary">AND</button>
+                <button class="btn btn-sm btn-secondary">OR</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="form-input" rows="3" placeholder="Optional description"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Device Group Detail with Triggers Tab -->
+  <div class="page" id="page-group-detail">
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb"><a href="#" onclick="navigateTo('home')">Home</a> / <a href="#" onclick="navigateTo('groups')">Groups</a> / UPS Rackmounts – Closet A</div>
+        <h1>UPS Rackmounts – Closet A</h1>
+      </div>
+      <div class="page-header-actions">
+        <span class="chip chip-success">25 Devices</span>
+        <span class="chip chip-info">Active</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab" onclick="switchGroupTab('devices')">Devices</div>
+      <div class="tab" onclick="switchGroupTab('properties')">Properties</div>
+      <div class="tab active" onclick="switchGroupTab('triggers')">Triggers</div>
+      <div class="tab" onclick="switchGroupTab('history')">History</div>
+    </div>
+    <div class="content-area" id="group-triggers-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <h3 style="font-size:14px; color:#263238; margin-bottom:4px;">Group-Level Triggers</h3>
+          <p style="font-size:12px; color:#607D8B;">Triggers defined here apply to all 25 devices in this group. Devices without the specified attribute are automatically skipped.</p>
+        </div>
+        <button class="btn btn-primary" onclick="openAddGroupTriggerModal()">+ Add Trigger</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Attribute</th>
+                <th>Condition</th>
+                <th>Threshold</th>
+                <th>Severity</th>
+                <th>Devices Applied</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="group-triggers-table">
+              <tr>
+                <td><strong>Temperature</strong> (°F)</td>
+                <td>> (Greater than)</td>
+                <td>85</td>
+                <td><span class="severity severity-major"><span class="severity-dot"></span>Major</span></td>
+                <td>
+                  <span class="tooltip-wrap">
+                    23 of 25
+                    <span class="tooltip">2 devices skipped (attribute not available)</span>
+                  </span>
+                </td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td>
+                  <button class="action-btn" onclick="openEditGroupTriggerModal('Temperature', '>', '85', 'Major')">✏</button>
+                  <button class="action-btn" onclick="openDeleteTriggerModal('Temperature > 85°F', 'UPS Rackmounts – Closet A', 23)">🗑</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Humidity</strong> (%)</td>
+                <td>> (Greater than)</td>
+                <td>70</td>
+                <td><span class="severity severity-minor"><span class="severity-dot"></span>Minor</span></td>
+                <td>
+                  <span class="tooltip-wrap">
+                    25 of 25
+                    <span class="tooltip">All devices have this attribute</span>
+                  </span>
+                </td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td>
+                  <button class="action-btn" onclick="openEditGroupTriggerModal('Humidity', '>', '70', 'Minor')">✏</button>
+                  <button class="action-btn" onclick="openDeleteTriggerModal('Humidity > 70%', 'UPS Rackmounts – Closet A', 25)">🗑</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <span class="warn-icon">⚠</span>
+        <p><strong>Priority note:</strong> If a device in this group has a device-level trigger for the same attribute, the device-level trigger takes precedence over this group-level trigger. Group-level triggers take precedence over model-level triggers.</p>
+      </div>
+    </div>
+    <!-- Devices tab content -->
+    <div class="content-area" id="group-devices-content" style="display:none">
+      <div class="card">
+        <div class="card-header"><h3>Devices in Group (25)</h3></div>
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead><tr><th>Device Name</th><th>Model</th><th>Status</th><th>Inherited Triggers</th></tr></thead>
+            <tbody>
+              <tr><td>UPS-RACK-001</td><td>UPS Rackmount 5kVA</td><td><span class="chip chip-success">Online</span></td><td>2 (Group)</td></tr>
+              <tr><td>UPS-RACK-002</td><td>UPS Rackmount 5kVA</td><td><span class="chip chip-success">Online</span></td><td>2 (Group) + 1 Override</td></tr>
+              <tr><td>UPS-RACK-003</td><td>UPS Rackmount 5kVA</td><td><span class="chip chip-success">Online</span></td><td>2 (Group)</td></tr>
+              <tr><td>UPS-RACK-004</td><td>UPS Rackmount 5kVA</td><td><span class="chip chip-warning">Warning</span></td><td>2 (Group)</td></tr>
+              <tr><td>UPS-RACK-005</td><td>UPS Rackmount 5kVA</td><td><span class="chip chip-success">Online</span></td><td>2 (Group)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Device Detail with Effective Triggers -->
+  <div class="page" id="page-device-detail">
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb"><a href="#" onclick="navigateTo('group-detail')">UPS Rackmounts – Closet A</a> / UPS-RACK-002</div>
+        <h1>UPS-RACK-002</h1>
+      </div>
+      <div class="page-header-actions">
+        <span class="chip chip-success">Online</span>
+        <span class="chip chip-info">UPS Rackmount 5kVA</span>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab" onclick="switchDeviceTab('overview')">Overview</div>
+      <div class="tab" onclick="switchDeviceTab('monitoring')">Monitoring</div>
+      <div class="tab active" onclick="switchDeviceTab('triggers')">Triggers</div>
+      <div class="tab" onclick="switchDeviceTab('alarms')">Alarms</div>
+    </div>
+    <div class="content-area">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div>
+          <h3 style="font-size:14px; color:#263238; margin-bottom:4px;">Effective Triggers</h3>
+          <p style="font-size:12px; color:#607D8B;">Shows all active triggers with their source. Device-level overrides take priority over group and model triggers.</p>
+        </div>
+        <button class="btn btn-primary" onclick="showToast('Navigate to group or model to add triggers at those levels', 'info')">+ Add Device Trigger</button>
+      </div>
+
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Attribute</th>
+                <th>Condition</th>
+                <th>Effective Value</th>
+                <th>Source</th>
+                <th>Severity</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Temperature</strong> (°F)</td>
+                <td>> (Greater than)</td>
+                <td><strong>90</strong></td>
+                <td>
+                  <span class="source-badge device">● Device</span>
+                  <div class="override-hint">Overrides Group: Closet A (85°F)</div>
+                </td>
+                <td><span class="severity severity-major"><span class="severity-dot"></span>Major</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td>
+                  <button class="btn btn-sm btn-text" onclick="openRevertModal()">↩ Revert</button>
+                  <button class="action-btn" onclick="openEditTriggerModal()">✏</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Humidity</strong> (%)</td>
+                <td>> (Greater than)</td>
+                <td><strong>70</strong></td>
+                <td>
+                  <span class="source-badge group">● Group: Closet A</span>
+                </td>
+                <td><span class="severity severity-minor"><span class="severity-dot"></span>Minor</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="openOverrideModal('Humidity', '>', '70', 'Minor', 'Group: Closet A')">Override</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Voltage</strong> (V)</td>
+                <td>&lt; (Less than)</td>
+                <td><strong>110</strong></td>
+                <td>
+                  <span class="source-badge model">● Model: UPS Rackmount 5kVA</span>
+                </td>
+                <td><span class="severity severity-critical"><span class="severity-dot"></span>Critical</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="openOverrideModal('Voltage', '<', '110', 'Critical', 'Model: UPS Rackmount 5kVA')">Override</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Battery Level</strong> (%)</td>
+                <td>&lt; (Less than)</td>
+                <td><strong>20</strong></td>
+                <td>
+                  <span class="source-badge device">● Device</span>
+                </td>
+                <td><span class="severity severity-critical"><span class="severity-dot"></span>Critical</span></td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td>
+                  <button class="action-btn" onclick="openEditTriggerModal()">✏</button>
+                  <button class="action-btn">🗑</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="warning-box">
+        <span class="warn-icon">ℹ</span>
+        <p><strong>Priority hierarchy:</strong> Device-level (highest) → Group-level → Model-level (lowest). To change a group or model trigger, navigate to the respective group/model page.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Trigger Rules -->
+  <div class="page" id="page-trigger-rules">
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb"><a href="#" onclick="navigateTo('triggers')">Triggers</a> / Trigger Rules</div>
+        <h1>Trigger Rules</h1>
+      </div>
+      <div class="page-header-actions">
+        <button class="btn btn-primary" onclick="openCreateRuleModal()">+ Create Rule</button>
+      </div>
+    </div>
+    <div class="content-area">
+      <div style="margin-bottom:16px;">
+        <p style="font-size:13px; color:#607D8B;">Rules allow applying the same trigger to multiple device groups simultaneously. Changes to a rule propagate to all target groups.</p>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Rule Name</th>
+                <th>Attribute</th>
+                <th>Condition</th>
+                <th>Target Groups</th>
+                <th>Total Devices</th>
+                <th>Status</th>
+                <th>Last Modified</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Humidity Standard – All Closets</strong></td>
+                <td>Humidity (%)</td>
+                <td>> 70</td>
+                <td>
+                  <span class="chip chip-info">Closet A</span>
+                  <span class="chip chip-info">Closet B</span>
+                </td>
+                <td>43</td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td>2026-05-20</td>
+                <td>
+                  <button class="action-btn" onclick="openEditRuleModal()">✏</button>
+                  <button class="action-btn" onclick="openDeleteRuleModal()">🗑</button>
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Temperature Baseline – Server Rooms</strong></td>
+                <td>Temperature (°F)</td>
+                <td>> 80</td>
+                <td>
+                  <span class="chip chip-info">Server Room A</span>
+                  <span class="chip chip-info">Server Room B</span>
+                  <span class="chip chip-info">Server Room C</span>
+                </td>
+                <td>89</td>
+                <td><div class="toggle on" onclick="this.classList.toggle('on')"></div></td>
+                <td>2026-05-18</td>
+                <td>
+                  <button class="action-btn" onclick="openEditRuleModal()">✏</button>
+                  <button class="action-btn" onclick="openDeleteRuleModal()">🗑</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Home placeholder -->
+  <div class="page" id="page-home">
+    <div class="page-header">
+      <div><h1>Home</h1></div>
+    </div>
+    <div class="content-area">
+      <div class="empty-state">
+        <div class="empty-icon">🏠</div>
+        <h3>BLSS Dashboard</h3>
+        <p>Navigate to <strong>Monitoring → Triggers</strong> to see the new group trigger management feature, or <strong>Groups → Device Groups</strong> to manage group-level triggers.</p>
+        <div style="display:flex; gap:8px; justify-content:center; margin-top:16px;">
+          <button class="btn btn-primary" onclick="navigateTo('triggers')">Go to Triggers</button>
+          <button class="btn btn-secondary" onclick="navigateTo('group-detail')">Go to Device Group</button>
+          <button class="btn btn-secondary" onclick="navigateTo('device-detail')">View Device Triggers</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal: Add Group Trigger -->
+<div class="modal-overlay" id="modal-add-group-trigger">
+  <div class="modal" style="width:580px">
+    <div class="modal-header">
+      <h2>Add Group-Level Trigger</h2>
+      <button class="modal-close" onclick="closeModal('modal-add-group-trigger')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px; color:#607D8B; margin-bottom:16px;">This trigger will be applied to all devices in <strong>UPS Rackmounts – Closet A</strong> (25 devices) that have the selected attribute.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Attribute</label>
+          <select class="form-select" id="grp-attr">
+            <option value="">Select attribute...</option>
+            <option value="temperature">Temperature (°F)</option>
+            <option value="humidity">Humidity (%)</option>
+            <option value="voltage">Voltage (V)</option>
+            <option value="current">Current (A)</option>
+            <option value="power">Power (W)</option>
+            <option value="battery">Battery Level (%)</option>
+            <option value="frequency">Input Frequency (Hz)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Condition</label>
+          <select class="form-select" id="grp-condition">
+            <option value="">Select...</option>
+            <option value=">">&#62; Greater than</option>
+            <option value="<">&#60; Less than</option>
+            <option value=">=">&#62;= Greater or equal</option>
+            <option value="<=">&#60;= Less or equal</option>
+            <option value="=">=  Equal</option>
+            <option value="!=">!= Not equal</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Threshold</label>
+          <input class="form-input" id="grp-threshold" type="number" placeholder="Enter value" />
+        </div>
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Severity</label>
+          <select class="form-select" id="grp-severity">
+            <option value="">Select severity...</option>
+            <option value="critical">Critical</option>
+            <option value="major">Major</option>
+            <option value="minor">Minor</option>
+            <option value="info">Info</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea class="form-input" rows="2" placeholder="Optional description for this trigger"></textarea>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+        <label class="form-label" style="margin-bottom:0">Enabled</label>
+        <div class="toggle on" id="grp-status" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-text" onclick="closeModal('modal-add-group-trigger')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitGroupTrigger()">Apply to Group</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Group Trigger -->
+<div class="modal-overlay" id="modal-edit-group-trigger">
+  <div class="modal" style="width:580px">
+    <div class="modal-header">
+      <h2>Edit Group-Level Trigger</h2>
+      <button class="modal-close" onclick="closeModal('modal-edit-group-trigger')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px; color:#607D8B; margin-bottom:16px;">Changes will propagate to all devices in <strong>UPS Rackmounts – Closet A</strong> that have this attribute (except devices with device-level overrides).</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Attribute</label>
+          <select class="form-select" id="edit-grp-attr">
+            <option value="temperature" selected>Temperature (°F)</option>
+            <option value="humidity">Humidity (%)</option>
+            <option value="voltage">Voltage (V)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Condition</label>
+          <select class="form-select" id="edit-grp-condition">
+            <option value=">" selected>&#62; Greater than</option>
+            <option value="<">&#60; Less than</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Threshold</label>
+          <input class="form-input" id="edit-grp-threshold" type="number" value="85" />
+        </div>
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Severity</label>
+          <select class="form-select" id="edit-grp-severity">
+            <option value="critical">Critical</option>
+            <option value="major" selected>Major</option>
+            <option value="minor">Minor</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-text" onclick="closeModal('modal-edit-group-trigger')">Cancel</button>
+      <button class="btn btn-primary" onclick="updateGroupTrigger()">Update & Propagate</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Delete Trigger Confirmation -->
+<div class="modal-overlay" id="modal-delete-trigger">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Delete Group Trigger</h2>
+      <button class="modal-close" onclick="closeModal('modal-delete-trigger')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px;">Are you sure you want to delete this trigger? This action will remove the trigger from all devices in the group.</p>
+      <div style="background:#F8FAFC; border-radius:6px; padding:12px 16px; margin-bottom:12px;">
+        <div style="font-size:12px; color:#607D8B;">Trigger</div>
+        <div style="font-size:14px; font-weight:600; color:#263238;" id="delete-trigger-name">Temperature > 85°F</div>
+        <div style="font-size:12px; color:#607D8B; margin-top:4px;">Group: <span id="delete-trigger-group">UPS Rackmounts – Closet A</span></div>
+        <div style="font-size:12px; color:#607D8B;">Affected devices: <strong id="delete-trigger-count">23</strong></div>
+      </div>
+      <div class="warning-box">
+        <span class="warn-icon">⚠</span>
+        <p>This will remove the inherited trigger from <strong id="delete-trigger-count2">23</strong> devices. Devices with device-level overrides will retain their device-level trigger.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-text" onclick="closeModal('modal-delete-trigger')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDeleteTrigger()">Delete Trigger</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Override at Device Level -->
+<div class="modal-overlay" id="modal-override">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <h2>Override Inherited Trigger</h2>
+      <button class="modal-close" onclick="closeModal('modal-override')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px; color:#607D8B; margin-bottom:12px;">Create a device-level override for <strong>UPS-RACK-002</strong>. The inherited trigger will be shadowed by this device-level value.</p>
+      <div style="background:#F8FAFC; border-radius:6px; padding:12px 16px; margin-bottom:16px;">
+        <div style="font-size:11px; color:#607D8B; text-transform:uppercase;">Current inherited value</div>
+        <div style="font-size:14px; color:#263238; margin-top:4px;"><strong id="override-attr">Humidity</strong> <span id="override-condition">></span> <span id="override-value">70</span></div>
+        <div style="font-size:11px; color:#607D8B; margin-top:2px;">Source: <span id="override-source">Group: Closet A</span></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><span class="required">*</span> New Threshold (Override)</label>
+        <input class="form-input" id="override-new-value" type="number" placeholder="Enter new threshold" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Severity</label>
+        <select class="form-select" id="override-severity">
+          <option value="critical">Critical</option>
+          <option value="major">Major</option>
+          <option value="minor" selected>Minor</option>
+          <option value="info">Info</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-text" onclick="closeModal('modal-override')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmOverride()">Save Override</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Revert Override -->
+<div class="modal-overlay" id="modal-revert">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Revert to Inherited Trigger</h2>
+      <button class="modal-close" onclick="closeModal('modal-revert')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px;">Remove the device-level override and revert to the inherited group trigger value.</p>
+      <div style="background:#F8FAFC; border-radius:6px; padding:12px 16px; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:11px; color:#607D8B;">CURRENT (Device override)</div>
+            <div style="font-size:16px; font-weight:600; color:#263238;">Temperature > 90°F</div>
+          </div>
+          <div style="font-size:20px; color:#90A4AE;">→</div>
+          <div>
+            <div style="font-size:11px; color:#607D8B;">REVERT TO (Group: Closet A)</div>
+            <div style="font-size:16px; font-weight:600; color:#2E7D32;">Temperature > 85°F</div>
+          </div>
+        </div>
+      </div>
+      <div class="warning-box">
+        <span class="warn-icon">ℹ</span>
+        <p>After reverting, this device will inherit the current group trigger value. If the group trigger changes in the future, this device will automatically receive the updated value.</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-text" onclick="closeModal('modal-revert')">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmRevert()">Revert to Inherited</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Create Rule -->
+<div class="modal-overlay" id="modal-create-rule">
+  <div class="modal" style="width:640px">
+    <div class="modal-header">
+      <h2>Create Trigger Rule</h2>
+      <button class="modal-close" onclick="closeModal('modal-create-rule')">×</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px; color:#607D8B; margin-bottom:16px;">Define a trigger and select multiple device groups to apply it to simultaneously.</p>
+      
+      <h4 style="font-size:12px; font-weight:600; color:#455A64; margin-bottom:8px; text-transform:uppercase;">Trigger Definition</h4>
+      <div class="form-group">
+        <label class="form-label"><span class="required">*</span> Rule Name</label>
+        <input class="form-input" placeholder="e.g., Humidity Standard – All Closets" />
+      </div>
+      <div class="form-row-3">
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Attribute</label>
+          <select class="form-select">
+            <option value="">Select...</option>
+            <option>Temperature (°F)</option>
+            <option selected>Humidity (%)</option>
+            <option>Voltage (V)</option>
+            <option>Current (A)</option>
+            <option>Battery Level (%)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Condition</label>
+          <select class="form-select">
+            <option value=">" selected>&#62; Greater than</option>
+            <option value="<">&#60; Less than</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label"><span class="required">*</span> Threshold</label>
+          <input class="form-input" type="number" value="70" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><span class="required">*</span> Severity</label>
+        <select class="form-select" style="width:200px">
+          <option>Minor</option>
+          <option>Major</option>
+          <option>Critical</option>
+        </select>
+      </div>
+
+      <h4 style="font-size:12px; font-weight:600; color:#455A64; margin:16px 0 8px; text-transform:uppercase;">Target Device Groups</h4>
+      <p style="font-size:11px; color:#90A4AE; margin-bottom:8px;">Select the groups where this rule should apply:</p>
+      <div class="group-selector" id="rule-group-selector">
+        <div class="group-chip selected" onclick="this.classList.toggle('selected')">UPS Rackmounts – Closet A <span style="color:#90A4AE">(25)</span></div>
+        <div class="group-chip selected" onclick="this.classList.toggle('selected')">UPS Rackmounts – Closet B <span style="color:#90A4AE">(18)</span></div>
+        <div class="group-chip" onclick="this.classList.toggle('selected')">PDU Fleet – Floor 2 <span style="color:#90A4AE">(32)</span></div>
+        <div class="group-chip" onclick="this.classList.toggle('selected')">Network Switches – DC1 <span style="color:#90A4AE">(12)</span></div>
+        <div class="group-chip" onclick="this.classList.toggle('selected')">Server Room A <span style="color:#90A4AE">(40)</span></div>
+        <div class="group-chip" onclick="this.classList.toggle('selected')">Server Room B <span style="color:#90A4AE">(35)</span></div>
+        <div class="group-chip" onclick="this.classList.toggle('selected')">Server Room C <span style="color:#90A4AE">(14)</span></div>
+        <div class="group-chip" onclick="this.classList.toggle('selected')">M2 Cards – All <span style="color:#90A4AE">(200)</span></div>
+      </div>
+      <div style="font-size:11px; color:#607D8B; margin-top:8px;">Selected: <strong>2 groups</strong> (43 devices total)</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-text" onclick="closeModal('modal-create-rule')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRule()">Create & Apply Rule</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Propagation Progress -->
+<div class="modal-overlay" id="modal-progress">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h2>Applying Trigger...</h2>
+    </div>
+    <div class="modal-body" style="text-align:center; padding:32px 20px;">
+      <div style="font-size:14px; color:#263238; margin-bottom:16px;" id="progress-message">Propagating trigger to 25 devices...</div>
+      <div class="progress-bar" style="margin-bottom:12px;">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <div style="font-size:12px; color:#607D8B;" id="progress-detail">0 of 25 devices processed</div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Insufficient Permissions -->
+<div class="modal-overlay" id="modal-permissions">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h2>Insufficient Permissions</h2>
+      <button class="modal-close" onclick="closeModal('modal-permissions')">×</button>
+    </div>
+    <div class="modal-body" style="text-align:center; padding:24px;">
+      <div style="font-size:48px; margin-bottom:12px;">🔒</div>
+      <p style="font-size:14px; color:#263238; margin-bottom:8px;"><strong>Access Denied</strong></p>
+      <p style="font-size:13px; color:#607D8B; margin-bottom:16px;">Group-level trigger management requires the <strong>Trigger Admin</strong> role.</p>
+      <p style="font-size:12px; color:#90A4AE;">Contact your system administrator for access.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('modal-permissions')">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// Navigation
+function navigateTo(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  
+  const pageMap = {
+    'home': 'page-home',
+    'triggers': 'page-triggers',
+    'new-trigger': 'page-new-trigger',
+    'groups': 'page-group-detail',
+    'group-detail': 'page-group-detail',
+    'device-detail': 'page-device-detail',
+    'trigger-rules': 'page-trigger-rules'
+  };
+  
+  const targetPage = document.getElementById(pageMap[page] || 'page-home');
+  if (targetPage) targetPage.classList.add('active');
+  
+  // Update active nav
+  if (page === 'triggers' || page === 'new-trigger') {
+    document.getElementById('nav-triggers').classList.add('active');
+  } else if (page === 'trigger-rules') {
+    document.querySelectorAll('#monitoring-sub .nav-item')[2].classList.add('active');
+  } else if (page === 'groups' || page === 'group-detail') {
+    document.getElementById('nav-groups').classList.add('active');
+    document.getElementById('groups-sub').style.maxHeight = '200px';
+    document.getElementById('groups-expand').classList.add('open');
+  }
+}
+
+function toggleNav(subId) {
+  const sub = document.getElementById(subId);
+  const expand = document.getElementById(subId.replace('-sub', '-expand'));
+  if (sub.style.maxHeight === '0px' || sub.style.maxHeight === '0') {
+    sub.style.maxHeight = '500px';
+    if (expand) expand.classList.add('open');
+  } else {
+    sub.style.maxHeight = '0';
+    if (expand) expand.classList.remove('open');
+  }
+}
+
+// Trigger type change (New Trigger page)
+function onTriggerTypeChange() {
+  const type = document.getElementById('trigger-type').value;
+  document.getElementById('device-selector-group').style.display = type === 'device' ? 'block' : 'none';
+  document.getElementById('group-selector-group').style.display = type === 'group' ? 'block' : 'none';
+  document.getElementById('model-selector-group').style.display = type === 'model' ? 'block' : 'none';
+}
+
+// Tabs
+function switchTriggersTab(tab) {
+  document.querySelectorAll('#page-triggers .tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function switchGroupTab(tab) {
+  document.querySelectorAll('#page-group-detail .tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('group-triggers-content').style.display = tab === 'triggers' ? 'block' : 'none';
+  document.getElementById('group-devices-content').style.display = tab === 'devices' ? 'block' : 'none';
+}
+
+function switchDeviceTab(tab) {
+  document.querySelectorAll('#page-device-detail .tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Modals
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+function openAddGroupTriggerModal() { openModal('modal-add-group-trigger'); }
+function openEditGroupTriggerModal(attr, cond, threshold, severity) {
+  document.getElementById('edit-grp-threshold').value = threshold;
+  openModal('modal-edit-group-trigger');
+}
+function openDeleteTriggerModal(name, group, count) {
+  document.getElementById('delete-trigger-name').textContent = name;
+  document.getElementById('delete-trigger-group').textContent = group;
+  document.getElementById('delete-trigger-count').textContent = count;
+  document.getElementById('delete-trigger-count2').textContent = count;
+  openModal('modal-delete-trigger');
+}
+function openOverrideModal(attr, cond, value, severity, source) {
+  document.getElementById('override-attr').textContent = attr;
+  document.getElementById('override-condition').textContent = cond;
+  document.getElementById('override-value').textContent = value;
+  document.getElementById('override-source').textContent = source;
+  document.getElementById('override-new-value').value = value;
+  openModal('modal-override');
+}
+function openRevertModal() { openModal('modal-revert'); }
+function openCreateRuleModal() { openModal('modal-create-rule'); }
+function openEditRuleModal() { showToast('Edit Rule modal would open here', 'info'); }
+function openDeleteRuleModal() { showToast('Delete Rule confirmation would appear here', 'info'); }
+function openEditTriggerModal() { showToast('Edit trigger modal would open here', 'info'); }
+
+// Actions
+function submitGroupTrigger() {
+  const attr = document.getElementById('grp-attr').value;
+  const threshold = document.getElementById('grp-threshold').value;
+  if (!attr || !threshold) {
+    showToast('Please fill in all required fields', 'error');
+    return;
+  }
+  closeModal('modal-add-group-trigger');
+  showPropagationProgress(25, function() {
+    showToast('Trigger applied to 23 of 25 devices. 2 devices skipped (attribute not available).', 'success');
+  });
+}
+
+function updateGroupTrigger() {
+  closeModal('modal-edit-group-trigger');
+  showPropagationProgress(23, function() {
+    showToast('Trigger updated and propagated to 23 devices.', 'success');
+  });
+}
+
+function confirmDeleteTrigger() {
+  closeModal('modal-delete-trigger');
+  showToast('Trigger deleted. Removed from 23 devices.', 'success');
+}
+
+function confirmOverride() {
+  const newVal = document.getElementById('override-new-value').value;
+  if (!newVal) { showToast('Please enter a threshold value', 'error'); return; }
+  closeModal('modal-override');
+  showToast('Device-level override saved. Effective trigger updated.', 'success');
+}
+
+function confirmRevert() {
+  closeModal('modal-revert');
+  showToast('Override reverted. Device now inherits group trigger: Temperature > 85°F', 'success');
+}
+
+function submitRule() {
+  closeModal('modal-create-rule');
+  showPropagationProgress(43, function() {
+    showToast('Rule created. Trigger applied to 41 of 43 devices across 2 groups.', 'success');
+  });
+}
+
+function submitNewTrigger() {
+  const name = document.getElementById('trigger-name').value;
+  if (!name) { showToast('Please enter a trigger name', 'error'); return; }
+  const type = document.getElementById('trigger-type').value;
+  if (type === 'group' || type === 'model') {
+    showPropagationProgress(type === 'group' ? 25 : 200, function() {
+      showToast('Trigger created and propagated successfully.', 'success');
+      navigateTo('triggers');
+    });
+  } else {
+    showToast('Trigger created successfully.', 'success');
+    navigateTo('triggers');
+  }
+}
+
+// Progress simulation
+function showPropagationProgress(total, callback) {
+  const modal = document.getElementById('modal-progress');
+  const fill = document.getElementById('progress-fill');
+  const message = document.getElementById('progress-message');
+  const detail = document.getElementById('progress-detail');
+  
+  message.textContent = 'Propagating trigger to ' + total + ' devices...';
+  fill.style.width = '0%';
+  detail.textContent = '0 of ' + total + ' devices processed';
+  modal.classList.add('show');
+  
+  let progress = 0;
+  const interval = setInterval(function() {
+    progress += Math.random() * 30 + 10;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(interval);
+      fill.style.width = '100%';
+      detail.textContent = total + ' of ' + total + ' devices processed';
+      setTimeout(function() {
+        modal.classList.remove('show');
+        if (callback) callback();
+      }, 500);
+    } else {
+      fill.style.width = progress + '%';
+      const done = Math.floor(total * progress / 100);
+      detail.textContent = done + ' of ' + total + ' devices processed';
+    }
+  }, 300);
+}
+
+// Toast
+function showToast(message, type) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + (type || 'info');
+  const icons = { success: '✓', error: '✗', info: 'ℹ' };
+  toast.innerHTML = '<span>' + (icons[type] || 'ℹ') + '</span> ' + message;
+  container.appendChild(toast);
+  setTimeout(function() {
+    toast.style.animation = 'slideOut 0.3s ease forwards';
+    setTimeout(function() { toast.remove(); }, 300);
+  }, 5000);
+}
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.classList.remove('show');
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Admin - License</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            background: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            height: 50px;
+            background: #1B2A4A;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .header-brand {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .header-logout {
+            color: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .header-logout:hover {
+            text-decoration: underline;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 155px;
+            background: #2C3E50;
+            position: fixed;
+            top: 50px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 900;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sidebar-nav li {
+            display: flex;
+            align-items: center;
+            padding: 10px 14px;
+            color: #CCD6E0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            gap: 8px;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-nav li:hover {
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+
+        .sidebar-nav li.active {
+            background: #0057B8;
+            color: #fff;
+            border-left-color: #fff;
+        }
+
+        .sidebar-nav li .nav-icon {
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        /* Global Banners */
+        .global-banners {
+            position: fixed;
+            top: 50px;
+            left: 0;
+            right: 0;
+            z-index: 950;
+        }
+
+        /* Content */
+        .content {
+            margin-left: 155px;
+            margin-top: 50px;
+            padding: 20px 24px;
+            min-height: calc(100vh - 50px);
+            overflow-y: auto;
+            background: #fff;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* Top Tabs */
+        .top-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 24px;
+        }
+
+        .top-tab {
+            padding: 8px 24px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 2px solid #0057B8;
+            color: #0057B8;
+            background: #fff;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .top-tab:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+
+        .top-tab:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+
+        .top-tab.active {
+            background: #0057B8;
+            color: #fff;
+        }
+
+        .top-tab:not(:first-child) {
+            border-left: none;
+        }
+
+        .top-tab-content {
+            display: none;
+        }
+
+        .top-tab-content.active {
+            display: block;
+        }
+
+        /* Section Titles */
+        .section-title {
+            color: #0057B8;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .section-subtitle {
+            color: #0057B8;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        /* License Info Card */
+        .license-card {
+            border: 1px solid #E0E0E0;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .license-info-row {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .license-info-label {
+            width: 140px;
+            color: #333;
+            font-weight: 400;
+        }
+
+        .license-info-value {
+            color: #333;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 6px 16px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+
+        .btn-outline-blue {
+            background: #fff;
+            border: 1px solid #0057B8;
+            color: #0057B8;
+        }
+
+        .btn-outline-blue:hover {
+            background: #F0F7FF;
+        }
+
+        .btn-primary {
+            background: #0057B8;
+            color: #fff;
+            border: 1px solid #0057B8;
+        }
+
+        .btn-primary:hover {
+            background: #004494;
+        }
+
+        .btn-secondary {
+            background: #E0E0E0;
+            color: #333;
+            border: 1px solid #CCC;
+        }
+
+        .btn-secondary:hover {
+            background: #D0D0D0;
+        }
+
+        /* Radio groups */
+        .radio-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 14px;
+        }
+
+        .radio-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #333;
+            cursor: pointer;
+        }
+
+        .radio-group input[type="radio"] {
+            accent-color: #0057B8;
+        }
+
+        /* Input */
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .input-row label {
+            font-size: 13px;
+            color: #333;
+            min-width: 90px;
+        }
+
+        .input-row input[type="text"] {
+            padding: 6px 10px;
+            border: 1px solid #CCC;
+            border-radius: 3px;
+            font-size: 13px;
+            width: 320px;
+            font-family: inherit;
+        }
+
+        .input-row input[type="text"]:focus {
+            outline: none;
+            border-color: #0057B8;
+        }
+
+        .input-icon-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid #CCC;
+            background: #F5F5F5;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .input-icon-btn:hover {
+            background: #E8E8E8;
+        }
+
+        .note-text {
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        /* Error Banner - Last Error Only */
+        .error-banner {
+            border-left: 4px solid #C62828;
+            padding: 12px 18px;
+            background: #FFEBEE;
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .error-banner.visible {
+            display: flex;
+        }
+
+        .error-banner-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .error-banner-content {
+            flex: 1;
+        }
+
+        .error-banner-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #C62828;
+            margin-bottom: 2px;
+        }
+
+        .error-banner-desc {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .error-banner-link {
+            font-size: 12px;
+            color: #0057B8;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 4px;
+            display: inline-block;
+        }
+
+        .error-banner-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Inline Error Panel (shown on page for action errors) */
+        .inline-error {
+            border-left: 4px solid #C62828;
+            border-radius: 4px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            background: #FFFAFA;
+            display: none;
+        }
+
+        .inline-error.visible {
+            display: block;
+        }
+
+        .inline-error-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .inline-error-code {
+            font-size: 12px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            color: #757575;
+            background: #F0F0F0;
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        .inline-error-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .inline-error-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #C62828;
+            margin-bottom: 12px;
+        }
+
+        .inline-error-section {
+            margin-bottom: 10px;
+        }
+
+        .inline-error-section h4 {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #757575;
+            margin-bottom: 4px;
+            letter-spacing: 0.3px;
+        }
+
+        .inline-error-section p {
+            font-size: 13px;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .inline-error-section ol {
+            padding-left: 20px;
+        }
+
+        .inline-error-section ol li {
+            font-size: 13px;
+            color: #444;
+            line-height: 1.8;
+        }
+
+        .inline-error-section a {
+            color: #0057B8;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .inline-error-section a:hover {
+            text-decoration: underline;
+        }
+
+        /* Grace Period Banner */
+        .grace-banner {
+            background: #FFF8E1;
+            border-left: 4px solid #F57F17;
+            padding: 12px 18px;
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .grace-banner.visible {
+            display: flex;
+        }
+
+        .grace-banner-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .grace-banner-content {
+            flex: 1;
+        }
+
+        .grace-banner-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #E65100;
+            margin-bottom: 2px;
+        }
+
+        .grace-banner-desc {
+            font-size: 12px;
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .grace-banner-time {
+            font-size: 13px;
+            font-weight: 700;
+            color: #E65100;
+            margin-top: 4px;
+        }
+
+        /* Reference Table */
+        .ref-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .ref-table thead {
+            background: #F5F5F5;
+        }
+
+        .ref-table th {
+            padding: 10px 14px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 1px solid #E0E0E0;
+            font-size: 12px;
+        }
+
+        .ref-table td {
+            padding: 10px 14px;
+            color: #333;
+            border-bottom: 1px solid #F0F0F0;
+            vertical-align: top;
+        }
+
+        .ref-table tr:hover td {
+            background: #FAFAFA;
+        }
+
+        .ref-table code {
+            background: #F0F0F0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        /* Action Icons */
+        .action-icon {
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .action-icon:hover {
+            opacity: 1;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active { display: flex; }
+
+        .modal {
+            background: #fff;
+            border-radius: 6px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            max-width: 480px;
+            width: 90%;
+        }
+
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #E0E0E0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 18px;
+            color: #757575;
+            cursor: pointer;
+        }
+
+        .modal-body { padding: 20px; }
+
+        .modal-body label {
+            display: block;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 4px;
+        }
+
+        .modal-body input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #CCC;
+            border-radius: 3px;
+            font-size: 13px;
+            margin-bottom: 14px;
+            font-family: inherit;
+        }
+
+        .modal-body input:focus {
+            outline: none;
+            border-color: #0057B8;
+        }
+
+        .modal-footer {
+            padding: 14px 20px;
+            border-top: 1px solid #E0E0E0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .warning-note {
+            background: #FFF3E0;
+            border: 1px solid #FFB74D;
+            border-radius: 4px;
+            padding: 10px 12px;
+            font-size: 12px;
+            color: #555;
+            line-height: 1.4;
+            margin-top: 4px;
+        }
+
+        /* Simulation Bar */
+        .simulate-bar {
+            position: fixed;
+            bottom: 0;
+            left: 155px;
+            right: 0;
+            background: #263238;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 800;
+        }
+
+        .simulate-bar label {
+            color: #B0BEC5;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .simulate-bar .btn {
+            font-size: 11px;
+            padding: 5px 10px;
+        }
+
+        .sim-btn-error {
+            background: #D32F2F;
+            color: #fff;
+            border: none;
+        }
+
+        .sim-btn-error:hover { background: #B71C1C; }
+
+        .sim-btn-warn {
+            background: #F57C00;
+            color: #fff;
+            border: none;
+        }
+
+        .sim-btn-warn:hover { background: #E65100; }
+
+        .sim-btn-generic {
+            background: #5C6BC0;
+            color: #fff;
+            border: none;
+        }
+
+        .sim-btn-generic:hover { background: #3949AB; }
+
+        .sim-btn-reset {
+            background: #455A64;
+            color: #fff;
+            border: none;
+        }
+
+        .sim-btn-reset:hover { background: #37474F; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <span class="header-brand">Server Admin</span>
+        <a class="header-logout" href="#">Logout</a>
+    </header>
+
+    <!-- Global Alert Banners (always visible below header) -->
+    <div class="global-banners" id="globalBanners">
+        <!-- Critical Error: License Invalid -->
+        <div class="error-banner" id="lastErrorBanner">
+            <span class="error-banner-icon">❌</span>
+            <div class="error-banner-content">
+                <div class="error-banner-title" id="errorTitle">License validation failed</div>
+                <div class="error-banner-desc" id="errorDesc"></div>
+                <a class="error-banner-link" id="errorLink" onclick="navigateToPage('license')">View Details →</a>
+            </div>
+        </div>
+        <!-- Warning: Grace Period -->
+        <div class="grace-banner" id="graceBanner">
+            <span class="grace-banner-icon">⚠️</span>
+            <div class="grace-banner-content">
+                <div class="grace-banner-title">License Grace Period Active</div>
+                <div class="grace-banner-desc">License validation has failed. The system is operating under a grace period. Resolve the issue before it expires to avoid service interruption.</div>
+                <div class="grace-banner-time">⏱ 6 days 14 hours remaining</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <ul class="sidebar-nav">
+            <li data-page="system-settings"><span class="nav-icon">⚙</span> System Settings</li>
+            <li data-page="license" class="active"><span class="nav-icon">📋</span> License</li>
+            <li data-page="certificate"><span class="nav-icon">🔒</span> Certificate</li>
+            <li data-page="patches"><span class="nav-icon">✕</span> Patches</li>
+            <li data-page="notifications"><span class="nav-icon">✉</span> Notifications</li>
+            <li data-page="system-monitor"><span class="nav-icon">🖥</span> System Monitor</li>
+            <li data-page="log-files"><span class="nav-icon">📄</span> Log Files</li>
+            <li data-page="reset-password"><span class="nav-icon">🔑</span> Reset Password</li>
+            <li data-page="backup"><span class="nav-icon">💾</span> Backup &amp; Restore</li>
+            <li data-page="app-homepage"><span class="nav-icon">🏠</span> Application Homepage</li>
+            <li data-page="script-runner"><span class="nav-icon">💻</span> Script Runner</li>
+        </ul>
+    </nav>
+
+    <!-- Content -->
+    <main class="content">
+
+        <!-- LICENSE PAGE -->
+        <div class="page active" id="page-license">
+
+            <!-- Top Tabs -->
+            <div class="top-tabs">
+                <div class="top-tab active" data-toptab="license-tab">License</div>
+                <div class="top-tab" data-toptab="feature-matrix-tab">Feature Matrix</div>
+                <div class="top-tab" data-toptab="error-history-tab">History</div>
+            </div>
+
+            <!-- License Tab Content -->
+            <div class="top-tab-content active" id="license-tab">
+
+                <!-- Inline Error Panel (for submit/reactivate errors) -->
+                <div class="inline-error" id="inlineErrorPanel">
+                    <div class="inline-error-header">
+                        <span class="inline-error-code" id="inlineErrorCode"></span>
+                        <span class="inline-error-time" id="inlineErrorTime"></span>
+                    </div>
+                    <div class="inline-error-title" id="inlineErrorTitle"></div>
+                    <div class="inline-error-section">
+                        <h4>What Happened</h4>
+                        <p id="inlineErrorWhat"></p>
+                    </div>
+                    <div class="inline-error-section">
+                        <h4>Why</h4>
+                        <p id="inlineErrorWhy"></p>
+                    </div>
+                    <div class="inline-error-section">
+                        <h4>What To Do</h4>
+                        <ol id="inlineErrorActions"></ol>
+                    </div>
+                </div>
+
+                <!-- License Information -->
+                <div class="license-card">
+                    <div class="section-title">License Information</div>
+                    <div class="license-info-row">
+                        <span class="license-info-label">Activation ID(s)</span>
+                        <span class="license-info-value">996879db-2388-4012-a9a9-73750dd39306</span>
+                    </div>
+                    <div class="license-info-row">
+                        <span class="license-info-label">License Type</span>
+                        <span class="license-info-value">Generic License</span>
+                    </div>
+                    <div class="license-info-row">
+                        <span class="license-info-label">Start Date</span>
+                        <span class="license-info-value">2026.03.22</span>
+                    </div>
+                    <div class="license-info-row">
+                        <span class="license-info-label">End Date</span>
+                        <span class="license-info-value">2027-03-23</span>
+                    </div>
+                    <div class="license-info-row">
+                        <span class="license-info-label">Status</span>
+                        <span class="license-info-value" id="licenseStatusText" style="color:#2E7D32;font-weight:500;">Valid</span>
+                    </div>
+                    <div style="margin-top:14px;">
+                        <button class="btn btn-outline-blue" onclick="handleReactivate()">Reactivate</button>
+                    </div>
+                </div>
+
+                <!-- Activate Software -->
+                <div class="license-card">
+                    <div class="section-title">Activate Software</div>
+
+                    <div class="section-subtitle">License Type</div>
+                    <div class="radio-group">
+                        <label><input type="radio" name="licType" value="generic" checked> Generic License</label>
+                        <label><input type="radio" name="licType" value="vcenter"> vCenter License</label>
+                    </div>
+
+                    <div class="section-subtitle">Activation Method</div>
+                    <div class="radio-group">
+                        <label><input type="radio" name="actMethod" value="online" checked> Online Activation</label>
+                        <label><input type="radio" name="actMethod" value="offline"> Offline Activation</label>
+                    </div>
+
+                    <p class="note-text">All BLSS products will support online activation. If you haven't received an activation ID yet, please contact your Eaton sales representative.</p>
+
+                    <div class="input-row">
+                        <label>Activation ID</label>
+                        <input type="text" id="activationIdInput" placeholder="">
+                        <span class="input-icon-btn" title="Paste">📋</span>
+                        <span class="input-icon-btn" title="Info">ℹ</span>
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="handleSubmitActivation()">Submit</button>
+                </div>
+            </div>
+
+            <!-- Feature Matrix Tab -->
+            <div class="top-tab-content" id="feature-matrix-tab">
+                <div class="section-title">Feature Matrix</div>
+                <table class="ref-table">
+                    <thead>
+                        <tr>
+                            <th>Feature</th>
+                            <th>Essentials</th>
+                            <th>Standard</th>
+                            <th>Enterprise</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Real-time Monitoring</td><td>✓</td><td>✓</td><td>✓</td></tr>
+                        <tr><td>Capacity Planning</td><td>—</td><td>✓</td><td>✓</td></tr>
+                        <tr><td>Multi-site Management</td><td>—</td><td>—</td><td>✓</td></tr>
+                        <tr><td>Advanced Reporting</td><td>—</td><td>✓</td><td>✓</td></tr>
+                        <tr><td>API Access</td><td>—</td><td>—</td><td>✓</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- History Tab -->
+            <div class="top-tab-content" id="error-history-tab">
+                <div class="section-title">History</div>
+                <table class="ref-table" id="errorHistoryTable">
+                    <thead>
+                        <tr>
+                            <th>Error Code</th>
+                            <th>Description</th>
+                            <th>Timestamp</th>
+                            <th style="width:80px;text-align:center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="errorHistoryBody">
+                        <tr>
+                            <td><code>HC-4012</code></td>
+                            <td>License validation failed — invalid vCenter credentials</td>
+                            <td>2026-05-20 14:32:18</td>
+                            <td style="text-align:center;">
+                                <span class="action-icon" title="View Details" onclick="showHistoryDetail('HC-4012','License validation failed — invalid vCenter credentials','The license validation process was unable to authenticate with the vCenter server.','The vCenter password stored in Brightlayer configuration no longer matches the current vCenter password.','Update vCenter credentials in System Settings → vCenter Configuration')">ℹ️</span>
+                                <span class="action-icon" title="Download Log" onclick="downloadEventLog('HC-4012','2026-05-20 14:32:18')">⬇️</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>HC-4020</code></td>
+                            <td>Grace period activated — license validation pending</td>
+                            <td>2026-05-20 14:32:18</td>
+                            <td style="text-align:center;">
+                                <span class="action-icon" title="View Details" onclick="showHistoryDetail('HC-4020','Grace period activated — license validation pending','The system has entered a grace period because the license could not be validated.','License validation failed and the system automatically activated the grace period.','Resolve underlying license error before grace period expires')">ℹ️</span>
+                                <span class="action-icon" title="Download Log" onclick="downloadEventLog('HC-4020','2026-05-20 14:32:18')">⬇️</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>HC-4001</code></td>
+                            <td>License validated successfully after credential update</td>
+                            <td>2026-05-20 15:01:45</td>
+                            <td style="text-align:center;">
+                                <span class="action-icon" title="View Details" onclick="showHistoryDetail('HC-4001','License validated successfully after credential update','License revalidation completed successfully after vCenter credentials were updated.','N/A','No action required — informational')">ℹ️</span>
+                                <span class="action-icon" title="Download Log" onclick="downloadEventLog('HC-4001','2026-05-20 15:01:45')">⬇️</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>HC-4012</code></td>
+                            <td>License validation failed — invalid vCenter credentials</td>
+                            <td>2026-04-15 09:11:03</td>
+                            <td style="text-align:center;">
+                                <span class="action-icon" title="View Details" onclick="showHistoryDetail('HC-4012','License validation failed — invalid vCenter credentials','The license validation process was unable to authenticate with the vCenter server.','Password rotation policy triggered credential expiration.','Update vCenter credentials in System Settings → vCenter Configuration')">ℹ️</span>
+                                <span class="action-icon" title="Download Log" onclick="downloadEventLog('HC-4012','2026-04-15 09:11:03')">⬇️</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>HC-4015</code></td>
+                            <td>vCenter connection timeout — retrying</td>
+                            <td>2026-03-28 22:05:47</td>
+                            <td style="text-align:center;">
+                                <span class="action-icon" title="View Details" onclick="showHistoryDetail('HC-4015','vCenter connection timeout','Connection to vCenter server timed out after 30 seconds.','Network connectivity issue or vCenter host unreachable on required ports.','Check network; verify vCenter host is reachable on required ports')">ℹ️</span>
+                                <span class="action-icon" title="Download Log" onclick="downloadEventLog('HC-4015','2026-03-28 22:05:47')">⬇️</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+
+        </div>
+
+        <!-- SYSTEM SETTINGS PAGE -->
+        <div class="page" id="page-system-settings">
+            <div class="section-title" style="font-size:16px;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #0057B8;">System Settings</div>
+            <div class="license-card">
+                <div class="section-title">vCenter Configuration</div>
+                <div class="license-info-row">
+                    <span class="license-info-label">vCenter Host</span>
+                    <span class="license-info-value">vcenter.datacenter.local</span>
+                </div>
+                <div class="license-info-row">
+                    <span class="license-info-label">Username</span>
+                    <span class="license-info-value">svc-brightlayer@vsphere.local</span>
+                </div>
+                <div class="license-info-row">
+                    <span class="license-info-label">Connection</span>
+                    <span class="license-info-value" id="vcenterConnStatus" style="color:#2E7D32;">Connected</span>
+                </div>
+                <div style="margin-top:14px;">
+                    <button class="btn btn-primary" onclick="openModal('credentialModal')">Update Credentials</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BACKUP PAGE -->
+        <div class="page" id="page-backup">
+            <div class="section-title" style="font-size:16px;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #0057B8;">Backup and Restore History</div>
+            <div style="margin-bottom:14px;text-align:right;">
+                <button class="btn btn-secondary">Restore</button>
+            </div>
+            <table class="ref-table">
+                <thead>
+                    <tr>
+                        <th style="width:30px;"></th>
+                        <th>Host Name</th>
+                        <th>Node Type</th>
+                        <th>Last Backup</th>
+                        <th>Last Restore</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="radio" name="backup-sel"></td>
+                        <td>BLSS-R9-U5-MODEL</td>
+                        <td>All-in-One</td>
+                        <td>2026-04-23 02:07:27.355071006 -0400</td>
+                        <td>N/A</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Placeholder pages -->
+        <div class="page" id="page-certificate"><div class="section-title" style="font-size:16px;">Certificate Management</div><p class="note-text" style="padding:30px 0;text-align:center;">Certificate management page content</p></div>
+        <div class="page" id="page-patches"><div class="section-title" style="font-size:16px;">Patches</div><p class="note-text" style="padding:30px 0;text-align:center;">Patch management page content</p></div>
+        <div class="page" id="page-notifications"><div class="section-title" style="font-size:16px;">Notifications</div><p class="note-text" style="padding:30px 0;text-align:center;">System notifications page content</p></div>
+        <div class="page" id="page-system-monitor"><div class="section-title" style="font-size:16px;">System Monitor</div><p class="note-text" style="padding:30px 0;text-align:center;">System monitor page content</p></div>
+        <div class="page" id="page-log-files"><div class="section-title" style="font-size:16px;">Log Files</div><p class="note-text" style="padding:30px 0;text-align:center;">Log files page content</p></div>
+        <div class="page" id="page-reset-password"><div class="section-title" style="font-size:16px;">Reset Password</div><p class="note-text" style="padding:30px 0;text-align:center;">Reset password page content</p></div>
+        <div class="page" id="page-app-homepage"><div class="section-title" style="font-size:16px;">Application Homepage</div><p class="note-text" style="padding:30px 0;text-align:center;">Application homepage content</p></div>
+        <div class="page" id="page-script-runner"><div class="section-title" style="font-size:16px;">Script Runner</div><p class="note-text" style="padding:30px 0;text-align:center;">Script runner page content</p></div>
+    </main>
+
+    <!-- Toast Container -->
+
+
+    <!-- Credential Update Modal -->
+    <div class="modal-overlay" id="credentialModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Update vCenter Credentials</h3>
+                <button class="modal-close" onclick="closeModal('credentialModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label>vCenter Host</label>
+                <input type="text" value="vcenter.datacenter.local" disabled style="background:#F5F5F5;">
+                <label>Username</label>
+                <input type="text" value="svc-brightlayer@vsphere.local">
+                <label>New Password</label>
+                <input type="password" id="newPw" placeholder="Enter new vCenter password">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPw" placeholder="Confirm password">
+                <div class="warning-note">⚠️ Updating credentials will trigger an immediate license revalidation. Ensure the new password is correct.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('credentialModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="handleCredentialUpdate()">Update &amp; Revalidate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Detail Modal -->
+    <div class="modal-overlay" id="detailModal" style="display:none;">
+        <div class="modal" style="max-width:520px;">
+            <div class="modal-header">
+                <h3>Event Details</h3>
+                <button class="modal-close" onclick="document.getElementById('detailModal').style.display='none'">&times;</button>
+            </div>
+            <div class="modal-body" id="detailModalContent"></div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('detailModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Simulation Bar -->
+    <div class="simulate-bar">
+        <label>🧪 Activation Errors:</label>
+        <button class="btn sim-btn-error" onclick="simulateVCenterError()">vCenter Credential Failure</button>
+        <button class="btn sim-btn-generic" onclick="simulateGenericHCError()">Generic HC Error</button>
+        <span style="color:#546E7A;margin:0 6px;">|</span>
+        <label>System License Issues:</label>
+        <button class="btn sim-btn-error" onclick="simulateLicenseExpired()">License Expired</button>
+        <button class="btn sim-btn-error" onclick="simulateLicenseInvalid()">License Invalid</button>
+        <button class="btn sim-btn-warn" onclick="simulateGracePeriod()">Grace Period</button>
+        <span style="color:#546E7A;margin:0 6px;">|</span>
+        <button class="btn sim-btn-reset" onclick="resetAll()">Reset</button>
+    </div>
+
+    <script>
+        // ===== Navigation =====
+        document.querySelectorAll('.sidebar-nav li').forEach(function(item) {
+            item.addEventListener('click', function() {
+                navigateToPage(this.getAttribute('data-page'));
+            });
+        });
+
+        function navigateToPage(page) {
+            document.querySelectorAll('.sidebar-nav li').forEach(function(el) { el.classList.remove('active'); });
+            document.querySelectorAll('.page').forEach(function(el) { el.classList.remove('active'); });
+            var navItem = document.querySelector('[data-page="' + page + '"]');
+            var pageEl = document.getElementById('page-' + page);
+            if (navItem) navItem.classList.add('active');
+            if (pageEl) pageEl.classList.add('active');
+        }
+
+        // ===== Top Tabs =====
+        document.querySelectorAll('.top-tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                var tabId = this.getAttribute('data-toptab');
+                document.querySelectorAll('.top-tab').forEach(function(t) { t.classList.remove('active'); });
+                document.querySelectorAll('.top-tab-content').forEach(function(c) { c.classList.remove('active'); });
+                this.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // ===== Modal =====
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        // ===== Global Banner Display =====
+        function showError(opts) {
+            var banner = document.getElementById('lastErrorBanner');
+            banner.className = 'error-banner visible';
+            document.getElementById('errorTitle').textContent = opts.code + ' — ' + opts.title;
+            document.getElementById('errorDesc').textContent = opts.what;
+            document.getElementById('licenseStatusText').textContent = opts.isWarning ? 'Grace Period' : 'Error';
+            document.getElementById('licenseStatusText').style.color = opts.isWarning ? '#E65100' : '#C62828';
+            adjustContentPadding();
+        }
+
+        function clearError() {
+            document.getElementById('lastErrorBanner').className = 'error-banner';
+            document.getElementById('graceBanner').className = 'grace-banner';
+            clearInlineError();
+            document.getElementById('licenseStatusText').textContent = 'Valid';
+            document.getElementById('licenseStatusText').style.color = '#2E7D32';
+            document.getElementById('vcenterConnStatus').textContent = 'Connected';
+            document.getElementById('vcenterConnStatus').style.color = '#2E7D32';
+            adjustContentPadding();
+        }
+
+        function adjustContentPadding() {
+            var banners = document.getElementById('globalBanners');
+            var h = banners.offsetHeight;
+            document.querySelector('.content').style.marginTop = (50 + h) + 'px';
+            document.querySelector('.sidebar').style.top = (50 + h) + 'px';
+        }
+
+        // ===== History Helper =====
+        function addToErrorHistory(code, description, what, why, actions) {
+            var tbody = document.getElementById('errorHistoryBody');
+            var now = new Date();
+            var ts = now.getFullYear() + '-' +
+                String(now.getMonth()+1).padStart(2,'0') + '-' +
+                String(now.getDate()).padStart(2,'0') + ' ' +
+                String(now.getHours()).padStart(2,'0') + ':' +
+                String(now.getMinutes()).padStart(2,'0') + ':' +
+                String(now.getSeconds()).padStart(2,'0');
+            var escapedDesc = description.replace(/'/g, "\\'");
+            var escapedWhat = (what || '').replace(/'/g, "\\'");
+            var escapedWhy = (why || '').replace(/'/g, "\\'");
+            var escapedActions = (actions || '').replace(/'/g, "\\'");
+            var row = document.createElement('tr');
+            row.innerHTML = '<td><code>' + code + '</code></td>' +
+                '<td>' + description + '</td>' +
+                '<td>' + ts + '</td>' +
+                '<td style="text-align:center;">' +
+                '<span class="action-icon" title="View Details" onclick="showHistoryDetail(\'' + code + '\',\'' + escapedDesc + '\',\'' + escapedWhat + '\',\'' + escapedWhy + '\',\'' + escapedActions + '\')">ℹ️</span> ' +
+                '<span class="action-icon" title="Download Log" onclick="downloadEventLog(\'' + code + '\',\'' + ts + '\')">⬇️</span>' +
+                '</td>';
+            tbody.insertBefore(row, tbody.firstChild);
+        }
+
+        function showHistoryDetail(code, title, what, why, actions) {
+            var html = '<div style="padding:20px;">' +
+                '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">' +
+                '<span style="background:#E3F2FD;color:#0057B8;padding:4px 10px;border-radius:4px;font-weight:600;font-size:13px;">' + code + '</span>' +
+                '<span style="font-weight:600;font-size:14px;">' + title + '</span></div>' +
+                '<div style="margin-bottom:12px;"><h4 style="margin:0 0 6px 0;font-size:13px;color:#555;">What Happened</h4><p style="margin:0;font-size:13px;color:#333;">' + what + '</p></div>' +
+                '<div style="margin-bottom:12px;"><h4 style="margin:0 0 6px 0;font-size:13px;color:#555;">Why</h4><p style="margin:0;font-size:13px;color:#333;">' + why + '</p></div>' +
+                '<div><h4 style="margin:0 0 6px 0;font-size:13px;color:#555;">What To Do</h4><p style="margin:0;font-size:13px;color:#333;">' + (actions || 'No action required') + '</p></div>' +
+                '</div>';
+            document.getElementById('detailModalContent').innerHTML = html;
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+
+        function downloadEventLog(code, timestamp) {
+            var logContent = '=== BLSS License Event Log ===\n' +
+                'Event Code: ' + code + '\n' +
+                'Timestamp: ' + timestamp + '\n' +
+                'Activation ID: 996879db-2388-4012-a9a9-73750dd39306\n' +
+                'Server: blss-server-01.datacenter.local\n' +
+                '---\n' +
+                '[' + timestamp + '] License validation triggered\n' +
+                '[' + timestamp + '] Activation ID: 996879db-2388-4012-a9a9-73750dd39306\n' +
+                '[' + timestamp + '] Connecting to vCenter: vcenter.datacenter.local:443\n' +
+                '[' + timestamp + '] Result: ' + code + '\n' +
+                '---\n' +
+                'End of log\n';
+            var blob = new Blob([logContent], { type: 'text/plain' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'license-event-' + code + '-' + timestamp.replace(/[: ]/g, '-') + '.log';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        function resolveActiveHistoryEntries() {
+            // No-op: Status column removed
+        }
+
+        // ===== Simulations =====
+        function showInlineError(opts) {
+            var panel = document.getElementById('inlineErrorPanel');
+            panel.className = 'inline-error visible';
+            document.getElementById('inlineErrorCode').textContent = opts.code;
+            document.getElementById('inlineErrorTime').textContent = new Date().toLocaleString();
+            document.getElementById('inlineErrorTitle').textContent = opts.title;
+            document.getElementById('inlineErrorWhat').textContent = opts.what;
+            document.getElementById('inlineErrorWhy').textContent = opts.why;
+            document.getElementById('inlineErrorActions').innerHTML = opts.actions.map(function(a) { return '<li>' + a + '</li>'; }).join('');
+            document.getElementById('licenseStatusText').textContent = 'Error';
+            document.getElementById('licenseStatusText').style.color = '#C62828';
+        }
+
+        function clearInlineError() {
+            document.getElementById('inlineErrorPanel').className = 'inline-error';
+        }
+
+        function simulateVCenterError() {
+            showInlineError({
+                code: 'HC-4012',
+                title: 'License validation failed — invalid vCenter credentials',
+                what: 'The license validation process was unable to authenticate with the vCenter server. The stored credentials were rejected (HTTP 401 Unauthorized).',
+                why: 'The vCenter password stored in Brightlayer configuration no longer matches the current vCenter password. This commonly occurs after a scheduled corporate password rotation.',
+                actions: [
+                    'Go to <a onclick="navigateToPage(\'system-settings\')">System Settings</a>',
+                    'Locate the <b>vCenter Configuration</b> section',
+                    'Click <b>Update Credentials</b>',
+                    'Enter the current valid vCenter password',
+                    'Click <b>Update &amp; Revalidate</b>'
+                ]
+            });
+            document.getElementById('vcenterConnStatus').textContent = 'Authentication Failed';
+            document.getElementById('vcenterConnStatus').style.color = '#C62828';
+            addToErrorHistory('HC-4012', 'License validation failed — invalid vCenter credentials', 'The license validation process was unable to authenticate with the vCenter server.', 'The vCenter password stored in Brightlayer configuration no longer matches the current vCenter password.', 'Update vCenter credentials in System Settings → vCenter Configuration');
+        }
+
+        function simulateGracePeriod() {
+            document.getElementById('graceBanner').className = 'grace-banner visible';
+            document.getElementById('licenseStatusText').textContent = 'Grace Period';
+            document.getElementById('licenseStatusText').style.color = '#E65100';
+            adjustContentPadding();
+            addToErrorHistory('HC-4020', 'Grace period activated — license validation pending', 'The system has entered a grace period because the license could not be validated.', 'License validation failed and the system automatically activated the grace period.', 'Resolve underlying license error before grace period expires');
+        }
+
+        function simulateGenericHCError() {
+            showInlineError({
+                code: 'HC-4010',
+                title: 'License validation failure — parameter mismatch',
+                what: 'The license validation detected a mismatch between the expected hardware fingerprint and the current system configuration.',
+                why: 'Possible causes: hardware changes (CPU, motherboard replacement), VM migration to a different host, or license file corruption.',
+                actions: [
+                    'Verify the server hardware has not changed since license activation',
+                    'Check if the VM was migrated to a different host',
+                    'Re-import the license file from your Eaton account',
+                    'Contact Brightlayer Support with error code <b>HC-4010</b>'
+                ]
+            });
+            addToErrorHistory('HC-4010', 'License validation failure — parameter mismatch', 'The license validation detected a mismatch between the expected hardware fingerprint and the current system configuration.', 'Possible causes: hardware changes, VM migration to a different host, or license file corruption.', 'Verify hardware unchanged; re-import license; contact support if persists');
+        }
+
+        function simulateLicenseExpired() {
+            showError({
+                code: 'HC-4031',
+                title: 'License has expired',
+                what: 'The software license expired on 2026-05-25. System functionality is now restricted to read-only mode.',
+            });
+            document.getElementById('licenseStatusText').textContent = 'Expired';
+            document.getElementById('licenseStatusText').style.color = '#C62828';
+            addToErrorHistory('HC-4031', 'License has expired — system in read-only mode', 'The license term has ended. System functionality is now restricted.', 'The license subscription period has reached its end date without renewal.', 'Contact Eaton sales representative to renew; enter new activation ID');
+        }
+
+        function simulateLicenseInvalid() {
+            showError({
+                code: 'HC-4040',
+                title: 'License is invalid',
+                what: 'The license file is invalid or corrupted. The system cannot verify the authenticity of the current license. All premium features are disabled.',
+            });
+            document.getElementById('licenseStatusText').textContent = 'Invalid';
+            document.getElementById('licenseStatusText').style.color = '#C62828';
+            addToErrorHistory('HC-4040', 'License is invalid — premium features disabled', 'The license file is invalid or corrupted. The system cannot verify authenticity.', 'License file tampered, activation ID mismatch, or license revoked.', 'Re-download and re-import license; contact support if persists');
+        }
+
+        function resetAll() {
+            clearError();
+            resolveActiveHistoryEntries();
+        }
+
+        // ===== Credential Update =====
+        function handleCredentialUpdate() {
+            var pw = document.getElementById('newPw').value;
+            var confirm = document.getElementById('confirmPw').value;
+            if (!pw || !confirm) {
+                return;
+            }
+            if (pw !== confirm) {
+                return;
+            }
+            closeModal('credentialModal');
+            // Successful credential update clears all errors
+            clearError();
+            resolveActiveHistoryEntries();
+            addToErrorHistory('HC-4001', 'License validated successfully after credential update', 'License revalidation completed successfully after vCenter credentials were updated.', 'N/A', 'No action required — informational');
+            document.getElementById('newPw').value = '';
+            document.getElementById('confirmPw').value = '';
+        }
+
+        // ===== Reactivate =====
+        function handleReactivate() {
+            clearError();
+            resolveActiveHistoryEntries();
+            addToErrorHistory('HC-4001', 'License reactivated successfully', 'License reactivation completed successfully.', 'N/A', 'No action required — informational');
+        }
+
+        // ===== Submit Activation =====
+        function handleSubmitActivation() {
+            var id = document.getElementById('activationIdInput').value;
+            if (!id.trim()) {
+                return;
+            }
+            // Successful activation clears all errors
+            clearError();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BDCSPM-6559 — Backup Enhancements | Server Admin</title>
+<style>
+/* ── Reset & Base ────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; font-family: 'Segoe UI', Roboto, Arial, sans-serif; font-size: 14px; color: #333; background: #F4F5F7; }
+
+/* ── Header ──────────────────────────────────────────── */
+.header {
+  height: 56px;
+  background: linear-gradient(135deg, #0057B8, #003C7E);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px; position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+}
+.header-brand { color: #fff; font-size: 20px; font-weight: 600; letter-spacing: 0.5px; }
+.header-logout {
+  background: none; border: none; color: #fff; font-size: 14px; cursor: pointer; padding: 6px 12px; border-radius: 4px;
+}
+.header-logout:hover { background: rgba(255,255,255,0.15); }
+
+/* ── Sidebar ─────────────────────────────────────────── */
+.sidebar {
+  width: 240px; position: fixed; top: 56px; left: 0; bottom: 0;
+  background: #1A2138; overflow-y: auto; z-index: 90;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; color: #B0B8C8; font-size: 14px;
+  cursor: pointer; transition: background 0.15s, color 0.15s;
+  text-decoration: none; border-left: 3px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+.nav-item.active { background: rgba(0,87,184,0.35); color: #fff; border-left-color: #4DA3FF; }
+.nav-icon { width: 20px; text-align: center; font-size: 16px; flex-shrink: 0; }
+
+/* ── Content Area ────────────────────────────────────── */
+.content { margin-left: 240px; margin-top: 56px; padding: 28px 32px; min-height: calc(100vh - 56px); }
+
+/* ── Page Title ──────────────────────────────────────── */
+.page-title { color: #0057B8; font-size: 20px; font-weight: 600; margin-bottom: 20px; }
+.page-subtitle { color: #666; font-size: 13px; margin-top: -14px; margin-bottom: 24px; }
+
+/* ── Tabs ────────────────────────────────────────────── */
+.tabs { display: flex; border-bottom: 2px solid #DDE1E6; margin-bottom: 24px; }
+.tab {
+  padding: 10px 24px; font-size: 14px; font-weight: 500; color: #666;
+  cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s; background: none; border-top: none; border-left: none; border-right: none;
+}
+.tab:hover { color: #0057B8; }
+.tab.active { color: #0057B8; border-bottom-color: #0057B8; font-weight: 600; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Card ────────────────────────────────────────────── */
+.card {
+  background: #fff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  margin-bottom: 20px; overflow: hidden;
+}
+.card-header {
+  background: #F0F2F5; padding: 14px 20px; font-size: 15px; font-weight: 600; color: #333;
+  display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E0E3E8;
+}
+.card-body { padding: 20px; }
+
+/* ── Form Controls ───────────────────────────────────── */
+.form-row { display: flex; gap: 24px; margin-bottom: 18px; flex-wrap: wrap; }
+.form-group { display: flex; flex-direction: column; gap: 6px; min-width: 200px; flex: 1; }
+.form-group label { font-size: 13px; font-weight: 600; color: #555; display: flex; align-items: center; gap: 6px; }
+.form-group input, .form-group select, .form-group textarea {
+  padding: 8px 12px; border: 1px solid #CCD0D5; border-radius: 4px; font-size: 14px;
+  font-family: inherit; color: #333; background: #fff; transition: border-color 0.15s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  outline: none; border-color: #0057B8; box-shadow: 0 0 0 2px rgba(0,87,184,0.15);
+}
+.form-group input:disabled, .form-group select:disabled {
+  background: #F4F5F7; color: #999; cursor: not-allowed;
+}
+.form-group .error-text { color: #D32F2F; font-size: 12px; display: none; }
+.form-group.has-error input, .form-group.has-error select { border-color: #D32F2F; }
+.form-group.has-error .error-text { display: block; }
+
+/* ── Toggle Switch ───────────────────────────────────── */
+.toggle-row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.toggle-label { font-size: 14px; font-weight: 500; color: #333; }
+.toggle {
+  position: relative; width: 44px; height: 24px; cursor: pointer;
+}
+.toggle input { display: none; }
+.toggle-track {
+  position: absolute; inset: 0; background: #CCD0D5; border-radius: 12px; transition: background 0.2s;
+}
+.toggle input:checked + .toggle-track { background: #0057B8; }
+.toggle-thumb {
+  position: absolute; top: 2px; left: 2px; width: 20px; height: 20px;
+  background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.toggle input:checked ~ .toggle-thumb { transform: translateX(20px); }
+
+/* ── Buttons ─────────────────────────────────────────── */
+.btn {
+  padding: 8px 20px; border-radius: 4px; font-size: 14px; font-weight: 500;
+  cursor: pointer; border: none; transition: background 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+.btn-primary { background: #0057B8; color: #fff; }
+.btn-primary:hover { background: #004A9E; }
+.btn-primary:disabled { background: #A0C4E8; cursor: not-allowed; }
+.btn-secondary { background: #E8ECF0; color: #333; }
+.btn-secondary:hover { background: #D8DCE2; }
+.btn-danger { background: #D32F2F; color: #fff; }
+.btn-danger:hover { background: #B71C1C; }
+.btn-outline { background: transparent; border: 1px solid #CCD0D5; color: #555; }
+.btn-outline:hover { background: #F4F5F7; }
+.btn-sm { padding: 5px 14px; font-size: 13px; }
+.btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+/* ── Data Table ──────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  background: #F0F2F5; padding: 10px 14px; text-align: left; font-size: 13px;
+  font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.3px;
+  border-bottom: 2px solid #DDE1E6;
+}
+.data-table td {
+  padding: 12px 14px; border-bottom: 1px solid #E8ECF0; font-size: 14px; color: #333;
+}
+.data-table tbody tr:hover { background: #F7F9FC; }
+.data-table .radio-cell { width: 40px; text-align: center; }
+.data-table input[type="radio"] { cursor: pointer; accent-color: #0057B8; }
+.empty-state { text-align: center; padding: 48px 20px; color: #999; }
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+/* ── Badge ───────────────────────────────────────────── */
+.badge {
+  display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px;
+  font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px;
+}
+.badge-active { background: #E8F5E9; color: #2E7D32; }
+.badge-inactive { background: #FAFAFA; color: #999; border: 1px solid #E0E0E0; }
+.badge-new { background: #E3F2FD; color: #1565C0; }
+.badge-warning { background: #FFF3E0; color: #E65100; }
+
+/* ── Tooltip ─────────────────────────────────────────── */
+.help-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 50%; background: #CCD0D5; color: #fff;
+  font-size: 10px; font-weight: 700; cursor: help; position: relative;
+}
+.help-icon .tooltip {
+  display: none; position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: #333; color: #fff; padding: 6px 10px; border-radius: 4px; font-size: 12px;
+  font-weight: 400; white-space: nowrap; z-index: 200; pointer-events: none;
+}
+.help-icon .tooltip::after {
+  content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: #333;
+}
+.help-icon:hover .tooltip { display: block; }
+
+/* ── Modal ───────────────────────────────────────────── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  z-index: 500; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: #fff; border-radius: 8px; width: 500px; max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2); overflow: hidden;
+}
+.modal-header {
+  padding: 16px 20px; font-size: 16px; font-weight: 600; border-bottom: 1px solid #E8ECF0;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #999; padding: 4px; }
+.modal-close:hover { color: #333; }
+.modal-body { padding: 20px; }
+.modal-footer { padding: 14px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #E8ECF0; }
+.change-summary {
+  background: #F7F9FC; border: 1px solid #DDE1E6; border-radius: 4px; padding: 12px 16px;
+  margin: 12px 0; font-size: 13px;
+}
+.change-summary .change-row { display: flex; justify-content: space-between; padding: 4px 0; }
+.change-summary .change-label { color: #666; }
+.change-summary .change-value { font-weight: 600; color: #333; }
+.warning-banner {
+  background: #FFF3E0; border: 1px solid #FFB74D; border-radius: 4px; padding: 10px 14px;
+  font-size: 13px; color: #E65100; display: flex; align-items: flex-start; gap: 8px; margin-top: 12px;
+}
+.warning-banner .warn-icon { font-size: 16px; flex-shrink: 0; }
+
+/* ── Toast / Snackbar ────────────────────────────────── */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 600; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 12px 20px; border-radius: 6px; font-size: 14px; color: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 10px;
+  animation: slideIn 0.3s ease; min-width: 280px;
+}
+.toast-success { background: #2E7D32; }
+.toast-error { background: #C62828; }
+.toast-info { background: #1565C0; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+
+/* ── Backup Schedule Summary ─────────────────────────── */
+.schedule-summary {
+  background: #E3F2FD; border-left: 4px solid #0057B8; border-radius: 0 4px 4px 0;
+  padding: 14px 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;
+}
+.schedule-summary .summary-icon { font-size: 22px; }
+.schedule-summary .summary-text { font-size: 14px; color: #333; }
+.schedule-summary .summary-text strong { color: #0057B8; }
+
+/* ── Info Grid ───────────────────────────────────────── */
+.info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 18px; }
+.info-item .info-label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
+.info-item .info-value { font-size: 14px; font-weight: 500; color: #333; }
+
+/* ── Responsive ──────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .sidebar { width: 200px; }
+  .content { margin-left: 200px; padding: 20px; }
+  .form-row { flex-direction: column; gap: 14px; }
+  .info-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Focus styles for accessibility */
+.btn:focus-visible, .tab:focus-visible, .nav-item:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid #4DA3FF; outline-offset: 2px;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════ HEADER ═══════ -->
+<header class="header">
+  <span class="header-brand">Brightlayer</span>
+  <button class="header-logout" onclick="showToast('Logout is a placeholder in this prototype.','info')">Logout</button>
+</header>
+
+<!-- ═══════ SIDEBAR ═══════ -->
+<nav class="sidebar" id="sidebar">
+  <a class="nav-item" data-page="system-settings" tabindex="0">
+    <span class="nav-icon">⚙</span> System Settings
+  </a>
+  <a class="nav-item" data-page="license" tabindex="0">
+    <span class="nav-icon">🔑</span> License
+  </a>
+  <a class="nav-item" data-page="certificate" tabindex="0">
+    <span class="nav-icon">🔒</span> Certificate
+  </a>
+  <a class="nav-item" data-page="servers" tabindex="0">
+    <span class="nav-icon">🖥</span> Servers
+  </a>
+  <a class="nav-item" data-page="patches" tabindex="0">
+    <span class="nav-icon">🛠</span> Patches
+  </a>
+  <a class="nav-item" data-page="notifications" tabindex="0">
+    <span class="nav-icon">✉</span> Notifications
+  </a>
+  <a class="nav-item" data-page="system-monitor" tabindex="0">
+    <span class="nav-icon">📊</span> System Monitor
+  </a>
+  <a class="nav-item" data-page="log-files" tabindex="0">
+    <span class="nav-icon">📄</span> Log Files
+  </a>
+  <a class="nav-item" data-page="reset-password" tabindex="0">
+    <span class="nav-icon">🔄</span> Reset Password
+  </a>
+  <a class="nav-item active" data-page="backup-restore" tabindex="0">
+    <span class="nav-icon">💾</span> Backup &amp; Restore
+  </a>
+  <a class="nav-item" data-page="script-runner" tabindex="0">
+    <span class="nav-icon">▶</span> Script Runner
+  </a>
+  <a class="nav-item" data-page="it-capabilities" tabindex="0">
+    <span class="nav-icon">🔧</span> IT Capabilities
+  </a>
+  <a class="nav-item" data-page="app-homepage" tabindex="0">
+    <span class="nav-icon">🏠</span> Application Homepage
+  </a>
+</nav>
+
+<!-- ═══════ CONTENT: BACKUP & RESTORE (main page) ═══════ -->
+<main class="content">
+
+  <!-- ── Backup & Restore Page ── -->
+  <div id="page-backup-restore" class="page-content">
+    <div class="page-title">Backup and Restore</div>
+    <div class="page-subtitle">Configure backup plans, remote storage, and retention policies for your BLSS environment.</div>
+
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="backup-plan" role="tab" aria-selected="true">Backup Plan</button>
+      <button class="tab" data-tab="backup-history" role="tab" aria-selected="false">Backup &amp; Restore History</button>
+    </div>
+
+    <!-- ━━━ TAB: Backup Plan ━━━ -->
+    <div id="tab-backup-plan" class="tab-panel active">
+
+      <!-- Enable Backup Toggle -->
+      <div class="card">
+        <div class="card-header">
+          Backup Configuration
+          <span class="badge badge-new">ENHANCED</span>
+        </div>
+        <div class="card-body">
+
+          <div class="toggle-row">
+            <label class="toggle" id="backup-toggle">
+              <input type="checkbox" checked id="backupEnabled">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+            <span class="toggle-label" id="backupEnabledLabel">Backup Enabled</span>
+            <span class="help-icon">?<span class="tooltip">Disable backup if using a 3rd-party backup solution to save disk space.</span></span>
+          </div>
+
+          <div id="backup-disabled-banner" style="display:none;" class="warning-banner">
+            <span class="warn-icon">⚠</span>
+            <span>Backup is disabled. No automatic backups will be performed. Enable this if you are not using a 3rd-party backup solution.</span>
+          </div>
+
+          <div id="backup-config-fields">
+            <!-- Backup Type & Schedule -->
+            <div class="form-row">
+              <div class="form-group">
+                <label>Backup Type <span class="help-icon">?<span class="tooltip">Full backup copies all data. Incremental copies only changes since last backup.</span></span></label>
+                <select id="backupType">
+                  <option value="full">Full Backup</option>
+                  <option value="incremental">Incremental Backup</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Schedule Frequency</label>
+                <select id="scheduleFreq">
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Backup Time</label>
+                <input type="time" id="backupTime" value="02:00">
+              </div>
+            </div>
+
+            <!-- Weekly Day Selector (shown when weekly selected) -->
+            <div class="form-row" id="weeklyDayRow" style="display:none;">
+              <div class="form-group">
+                <label>Day of Week</label>
+                <select id="weeklyDay">
+                  <option value="Sunday">Sunday</option>
+                  <option value="Monday">Monday</option>
+                  <option value="Tuesday">Tuesday</option>
+                  <option value="Wednesday">Wednesday</option>
+                  <option value="Thursday">Thursday</option>
+                  <option value="Friday">Friday</option>
+                  <option value="Saturday">Saturday</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Monthly Day Selector -->
+            <div class="form-row" id="monthlyDayRow" style="display:none;">
+              <div class="form-group">
+                <label>Day of Month</label>
+                <select id="monthlyDay">
+                  <option value="1">1st</option>
+                  <option value="7">7th</option>
+                  <option value="14">14th</option>
+                  <option value="15">15th</option>
+                  <option value="28">28th</option>
+                  <option value="last">Last day</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Schedule Summary -->
+            <div class="schedule-summary" id="scheduleSummary">
+              <span class="summary-icon">📅</span>
+              <span class="summary-text">Next backup: <strong>Full Backup</strong> scheduled <strong>daily at 02:00</strong></span>
+            </div>
+
+            <!-- Retention Policy -->
+            <div class="card" style="box-shadow:none; border:1px solid #E0E3E8;">
+              <div class="card-header" style="background:#FAFBFC;">
+                Retention &amp; Rotation Policy
+                <span class="help-icon">?<span class="tooltip">Configure how many backups to keep and when old backups are automatically removed.</span></span>
+              </div>
+              <div class="card-body">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Backups to Keep</label>
+                    <input type="number" id="backupsToKeep" value="5" min="1" max="100">
+                    <span class="error-text">Must be between 1 and 100.</span>
+                  </div>
+                  <div class="form-group">
+                    <label>Rotation Policy</label>
+                    <select id="rotationPolicy">
+                      <option value="fifo">FIFO — Delete oldest first</option>
+                      <option value="grandfather">Grandfather-Father-Son (GFS)</option>
+                      <option value="tower-of-hanoi">Tower of Hanoi</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-row" id="gfsOptions" style="display:none;">
+                  <div class="form-group">
+                    <label>Daily Backups to Keep</label>
+                    <input type="number" id="gfsDailyKeep" value="7" min="1" max="30">
+                  </div>
+                  <div class="form-group">
+                    <label>Weekly Backups to Keep</label>
+                    <input type="number" id="gfsWeeklyKeep" value="4" min="1" max="12">
+                  </div>
+                  <div class="form-group">
+                    <label>Monthly Backups to Keep</label>
+                    <input type="number" id="gfsMonthlyKeep" value="3" min="1" max="12">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Remote Location -->
+            <div class="card" style="box-shadow:none; border:1px solid #E0E3E8; margin-top: 20px;">
+              <div class="card-header" style="background:#FAFBFC;">
+                Remote Backup Location
+                <span class="help-icon">?<span class="tooltip">Store backup copies on a remote server for disaster recovery.</span></span>
+              </div>
+              <div class="card-body">
+                <div class="toggle-row">
+                  <label class="toggle">
+                    <input type="checkbox" id="remoteEnabled">
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb"></div>
+                  </label>
+                  <span class="toggle-label">Enable Remote Backup</span>
+                </div>
+                <div id="remote-fields" style="display:none;">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Protocol</label>
+                      <select id="remoteProtocol">
+                        <option value="smb">SMB / CIFS</option>
+                        <option value="nfs">NFS</option>
+                        <option value="sftp">SFTP</option>
+                      </select>
+                    </div>
+                    <div class="form-group">
+                      <label>Remote Host</label>
+                      <input type="text" id="remoteHost" placeholder="e.g. 192.168.1.100 or nas.local" disabled>
+                      <span class="error-text">Remote host is required.</span>
+                    </div>
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>Share Path</label>
+                      <input type="text" id="remotePath" placeholder="e.g. /backups/blss" disabled>
+                      <span class="error-text">Share path is required.</span>
+                    </div>
+                    <div class="form-group">
+                      <label>Username</label>
+                      <input type="text" id="remoteUser" placeholder="Backup user" disabled>
+                    </div>
+                    <div class="form-group">
+                      <label>Password</label>
+                      <input type="password" id="remotePass" placeholder="••••••••" disabled>
+                    </div>
+                  </div>
+                  <div class="btn-group" style="justify-content: flex-start;">
+                    <button class="btn btn-outline btn-sm" id="testConnectionBtn" disabled onclick="testConnection()">Test Connection</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="btn-group" style="margin-top: 28px;">
+              <button class="btn btn-secondary" onclick="resetForm()">Reset</button>
+              <button class="btn btn-primary" onclick="openSaveModal()">Save Configuration</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ━━━ TAB: Backup & Restore History ━━━ -->
+    <div id="tab-backup-history" class="tab-panel">
+      <div style="display:flex; justify-content:flex-end; margin-bottom: 16px;">
+        <button class="btn btn-primary" id="restoreBtn" disabled onclick="openRestoreModal()">Restore</button>
+      </div>
+      <div class="card">
+        <table class="data-table" id="historyTable">
+          <thead>
+            <tr>
+              <th class="radio-cell"></th>
+              <th>Host Name</th>
+              <th>Node Type</th>
+              <th>Backup Type</th>
+              <th>Last Backup</th>
+              <th>Size</th>
+              <th>Status</th>
+              <th>Last Restore</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="radio-cell"><input type="radio" name="backupSelect" value="0"></td>
+              <td>BLSS-R9-U5-MODEL</td>
+              <td>All-in-One</td>
+              <td>Full</td>
+              <td>2026-04-23 02:07:27 -0400</td>
+              <td>2.4 GB</td>
+              <td><span class="badge badge-active">Success</span></td>
+              <td>N/A</td>
+            </tr>
+            <tr>
+              <td class="radio-cell"><input type="radio" name="backupSelect" value="1"></td>
+              <td>BLSS-R9-U5-MODEL</td>
+              <td>All-in-One</td>
+              <td>Full</td>
+              <td>2026-04-22 02:05:14 -0400</td>
+              <td>2.4 GB</td>
+              <td><span class="badge badge-active">Success</span></td>
+              <td>N/A</td>
+            </tr>
+            <tr>
+              <td class="radio-cell"><input type="radio" name="backupSelect" value="2"></td>
+              <td>BLSS-R9-U5-MODEL</td>
+              <td>All-in-One</td>
+              <td>Full</td>
+              <td>2026-04-21 02:03:48 -0400</td>
+              <td>2.3 GB</td>
+              <td><span class="badge badge-active">Success</span></td>
+              <td>N/A</td>
+            </tr>
+            <tr>
+              <td class="radio-cell"><input type="radio" name="backupSelect" value="3"></td>
+              <td>BLSS-R9-U5-MODEL</td>
+              <td>All-in-One</td>
+              <td>Full</td>
+              <td>2026-04-20 02:06:11 -0400</td>
+              <td>2.3 GB</td>
+              <td><span class="badge badge-warning">Warning</span></td>
+              <td>N/A</td>
+            </tr>
+            <tr>
+              <td class="radio-cell"><input type="radio" name="backupSelect" value="4"></td>
+              <td>BLSS-R9-U5-MODEL</td>
+              <td>All-in-One</td>
+              <td>Full</td>
+              <td>2026-04-19 02:04:55 -0400</td>
+              <td>2.3 GB</td>
+              <td><span class="badge badge-active">Success</span></td>
+              <td>2026-04-19 14:32:10 -0400</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Placeholder Pages ── -->
+  <div id="page-system-settings" class="page-content" style="display:none;">
+    <div class="page-title">System Settings</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">⚙</div>System Settings content would appear here.</div></div></div>
+  </div>
+  <div id="page-license" class="page-content" style="display:none;">
+    <div class="page-title">License</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">🔑</div>License management content would appear here.</div></div></div>
+  </div>
+  <div id="page-certificate" class="page-content" style="display:none;">
+    <div class="page-title">Certificate</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">🔒</div>Certificate management content would appear here.</div></div></div>
+  </div>
+  <div id="page-servers" class="page-content" style="display:none;">
+    <div class="page-title">Servers</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">🖥</div>Server management content would appear here.</div></div></div>
+  </div>
+  <div id="page-patches" class="page-content" style="display:none;">
+    <div class="page-title">Patches</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">🛠</div>Patch management content would appear here.</div></div></div>
+  </div>
+  <div id="page-notifications" class="page-content" style="display:none;">
+    <div class="page-title">Notifications</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">✉</div>Notification settings would appear here.</div></div></div>
+  </div>
+  <div id="page-system-monitor" class="page-content" style="display:none;">
+    <div class="page-title">System Monitor</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">📊</div>System monitoring dashboards would appear here.</div></div></div>
+  </div>
+  <div id="page-log-files" class="page-content" style="display:none;">
+    <div class="page-title">Log Files</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">📄</div>Log file viewer would appear here.</div></div></div>
+  </div>
+  <div id="page-reset-password" class="page-content" style="display:none;">
+    <div class="page-title">Reset Password</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">🔄</div>Password reset form would appear here.</div></div></div>
+  </div>
+  <div id="page-script-runner" class="page-content" style="display:none;">
+    <div class="page-title">Script Runner</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">▶</div>Script runner interface would appear here.</div></div></div>
+  </div>
+  <div id="page-it-capabilities" class="page-content" style="display:none;">
+    <div class="page-title">IT Capabilities</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">🔧</div>IT capabilities content would appear here.</div></div></div>
+  </div>
+  <div id="page-app-homepage" class="page-content" style="display:none;">
+    <div class="page-title">Application Homepage</div>
+    <div class="card"><div class="card-body"><div class="empty-state"><div class="empty-icon">🏠</div>Application homepage content would appear here.</div></div></div>
+  </div>
+</main>
+
+<!-- ═══════ SAVE CONFIGURATION MODAL ═══════ -->
+<div class="modal-overlay" id="saveModal">
+  <div class="modal" role="dialog" aria-labelledby="saveModalTitle" aria-modal="true">
+    <div class="modal-header">
+      <span id="saveModalTitle">Save Backup Configuration</span>
+      <button class="modal-close" onclick="closeSaveModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>You are about to update the backup configuration. Please review the changes below:</p>
+      <div class="change-summary" id="changeSummary">
+        <!-- Populated by JS -->
+      </div>
+      <div class="warning-banner" id="saveWarning" style="display:none;">
+        <span class="warn-icon">⚠</span>
+        <span id="saveWarningText"></span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSaveModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmSave()">Confirm &amp; Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ RESTORE CONFIRMATION MODAL ═══════ -->
+<div class="modal-overlay" id="restoreModal">
+  <div class="modal" role="dialog" aria-labelledby="restoreModalTitle" aria-modal="true">
+    <div class="modal-header">
+      <span id="restoreModalTitle">Confirm Restore</span>
+      <button class="modal-close" onclick="closeRestoreModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>You are about to restore the system from the selected backup. This action will:</p>
+      <div class="change-summary" id="restoreSummary">
+        <!-- Populated by JS -->
+      </div>
+      <div class="warning-banner">
+        <span class="warn-icon">⚠</span>
+        <span>This is a destructive action. All current data will be replaced with the backup data. The system will restart after restore.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRestoreModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmRestore()">Restore Now</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ DISABLE BACKUP MODAL ═══════ -->
+<div class="modal-overlay" id="disableModal">
+  <div class="modal" role="dialog" aria-labelledby="disableModalTitle" aria-modal="true">
+    <div class="modal-header">
+      <span id="disableModalTitle">Disable Automatic Backup</span>
+      <button class="modal-close" onclick="closeDisableModal()" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Are you sure you want to disable automatic backups?</p>
+      <div class="warning-banner">
+        <span class="warn-icon">⚠</span>
+        <span>No automatic backups will be performed. Only disable this if you are using a 3rd-party backup solution. Existing backup files will be retained.</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDisableModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDisableBackup()">Disable Backup</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ TOAST CONTAINER ═══════ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════ JAVASCRIPT ═══════ -->
+<script>
+(function() {
+  'use strict';
+
+  // ── Sidebar Navigation ──────────────────────────────
+  var navItems = document.querySelectorAll('.nav-item');
+  navItems.forEach(function(item) {
+    item.addEventListener('click', function() {
+      var page = this.getAttribute('data-page');
+      navigateTo(page);
+    });
+    item.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
+    });
+  });
+
+  function navigateTo(page) {
+    // Update nav active state
+    navItems.forEach(function(n) { n.classList.remove('active'); });
+    var activeNav = document.querySelector('.nav-item[data-page="' + page + '"]');
+    if (activeNav) activeNav.classList.add('active');
+
+    // Show correct page
+    var pages = document.querySelectorAll('.page-content');
+    pages.forEach(function(p) { p.style.display = 'none'; });
+    var target = document.getElementById('page-' + page);
+    if (target) target.style.display = 'block';
+  }
+
+  // ── Tab Switching ───────────────────────────────────
+  var tabs = document.querySelectorAll('.tab');
+  tabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var tabId = this.getAttribute('data-tab');
+      tabs.forEach(function(t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
+      this.classList.add('active');
+      this.setAttribute('aria-selected', 'true');
+
+      var panels = document.querySelectorAll('.tab-panel');
+      panels.forEach(function(p) { p.classList.remove('active'); });
+      document.getElementById('tab-' + tabId).classList.add('active');
+    });
+  });
+
+  // ── Backup Enable/Disable Toggle ───────────────────
+  var backupEnabled = document.getElementById('backupEnabled');
+  var configFields = document.getElementById('backup-config-fields');
+  var disabledBanner = document.getElementById('backup-disabled-banner');
+  var enabledLabel = document.getElementById('backupEnabledLabel');
+
+  backupEnabled.addEventListener('change', function() {
+    if (!this.checked) {
+      // Show confirmation modal before disabling
+      document.getElementById('disableModal').classList.add('open');
+    } else {
+      configFields.style.display = 'block';
+      disabledBanner.style.display = 'none';
+      enabledLabel.textContent = 'Backup Enabled';
+      showToast('Automatic backup has been enabled.', 'success');
+    }
+  });
+
+  // ── Schedule Frequency Handling ─────────────────────
+  var scheduleFreq = document.getElementById('scheduleFreq');
+  var weeklyRow = document.getElementById('weeklyDayRow');
+  var monthlyRow = document.getElementById('monthlyDayRow');
+
+  scheduleFreq.addEventListener('change', function() {
+    weeklyRow.style.display = this.value === 'weekly' ? 'flex' : 'none';
+    monthlyRow.style.display = this.value === 'monthly' ? 'flex' : 'none';
+    updateScheduleSummary();
+  });
+
+  document.getElementById('backupType').addEventListener('change', updateScheduleSummary);
+  document.getElementById('backupTime').addEventListener('change', updateScheduleSummary);
+  document.getElementById('weeklyDay').addEventListener('change', updateScheduleSummary);
+  document.getElementById('monthlyDay').addEventListener('change', updateScheduleSummary);
+
+  function updateScheduleSummary() {
+    var type = document.getElementById('backupType').value;
+    var freq = scheduleFreq.value;
+    var time = document.getElementById('backupTime').value;
+    var typeName = type === 'full' ? 'Full Backup' : 'Incremental Backup';
+    var schedText = '';
+
+    if (freq === 'daily') {
+      schedText = 'daily at ' + time;
+    } else if (freq === 'weekly') {
+      schedText = 'every ' + document.getElementById('weeklyDay').value + ' at ' + time;
+    } else {
+      var dayVal = document.getElementById('monthlyDay').value;
+      var dayText = dayVal === 'last' ? 'the last day' : 'the ' + ordinal(parseInt(dayVal));
+      schedText = 'monthly on ' + dayText + ' at ' + time;
+    }
+
+    document.getElementById('scheduleSummary').querySelector('.summary-text').innerHTML =
+      'Next backup: <strong>' + typeName + '</strong> scheduled <strong>' + schedText + '</strong>';
+  }
+
+  function ordinal(n) {
+    var s = ['th','st','nd','rd'], v = n % 100;
+    return n + (s[(v-20)%10] || s[v] || s[0]);
+  }
+
+  // ── Rotation Policy ─────────────────────────────────
+  var rotationPolicy = document.getElementById('rotationPolicy');
+  var gfsOptions = document.getElementById('gfsOptions');
+
+  rotationPolicy.addEventListener('change', function() {
+    gfsOptions.style.display = this.value === 'grandfather' ? 'flex' : 'none';
+  });
+
+  // ── Remote Backup Toggle ────────────────────────────
+  var remoteEnabled = document.getElementById('remoteEnabled');
+  var remoteFields = document.getElementById('remote-fields');
+
+  remoteEnabled.addEventListener('change', function() {
+    remoteFields.style.display = this.checked ? 'block' : 'none';
+    var inputs = remoteFields.querySelectorAll('input, select, button');
+    inputs.forEach(function(el) { el.disabled = !remoteEnabled.checked; });
+  });
+
+  // ── Backups-to-Keep Validation ──────────────────────
+  var backupsToKeep = document.getElementById('backupsToKeep');
+  backupsToKeep.addEventListener('input', function() {
+    var val = parseInt(this.value);
+    var group = this.closest('.form-group');
+    if (isNaN(val) || val < 1 || val > 100) {
+      group.classList.add('has-error');
+    } else {
+      group.classList.remove('has-error');
+    }
+  });
+
+  // ── History Table Radio ─────────────────────────────
+  var radios = document.querySelectorAll('input[name="backupSelect"]');
+  radios.forEach(function(r) {
+    r.addEventListener('change', function() {
+      document.getElementById('restoreBtn').disabled = false;
+    });
+  });
+
+  // ── Modal Functions ─────────────────────────────────
+  window.openSaveModal = function() {
+    // Validate
+    var val = parseInt(backupsToKeep.value);
+    if (isNaN(val) || val < 1 || val > 100) {
+      backupsToKeep.closest('.form-group').classList.add('has-error');
+      showToast('Please fix validation errors before saving.', 'error');
+      return;
+    }
+    if (remoteEnabled.checked) {
+      var hostOk = validateRequired('remoteHost');
+      var pathOk = validateRequired('remotePath');
+      if (!hostOk || !pathOk) {
+        showToast('Please fill in all required remote location fields.', 'error');
+        return;
+      }
+    }
+
+    // Build summary
+    var summary = document.getElementById('changeSummary');
+    var typeLabel = document.getElementById('backupType').value === 'full' ? 'Full' : 'Incremental';
+    var freqLabel = capitalize(scheduleFreq.value);
+    var rotLabel = rotationPolicy.options[rotationPolicy.selectedIndex].text;
+
+    summary.innerHTML =
+      '<div class="change-row"><span class="change-label">Backup Type</span><span class="change-value">' + typeLabel + '</span></div>' +
+      '<div class="change-row"><span class="change-label">Schedule</span><span class="change-value">' + freqLabel + ' at ' + document.getElementById('backupTime').value + '</span></div>' +
+      '<div class="change-row"><span class="change-label">Backups to Keep</span><span class="change-value">' + backupsToKeep.value + '</span></div>' +
+      '<div class="change-row"><span class="change-label">Rotation Policy</span><span class="change-value">' + rotLabel + '</span></div>' +
+      '<div class="change-row"><span class="change-label">Remote Backup</span><span class="change-value">' + (remoteEnabled.checked ? 'Enabled' : 'Disabled') + '</span></div>';
+
+    // Show warning if changing to incremental
+    var warning = document.getElementById('saveWarning');
+    if (document.getElementById('backupType').value === 'incremental') {
+      warning.style.display = 'flex';
+      document.getElementById('saveWarningText').textContent = 'Incremental backup requires an initial full backup. The first backup cycle will perform a full backup automatically.';
+    } else {
+      warning.style.display = 'none';
+    }
+
+    document.getElementById('saveModal').classList.add('open');
+  };
+
+  window.closeSaveModal = function() {
+    document.getElementById('saveModal').classList.remove('open');
+  };
+
+  window.confirmSave = function() {
+    closeSaveModal();
+    showToast('Backup configuration saved successfully.', 'success');
+  };
+
+  window.openRestoreModal = function() {
+    var selected = document.querySelector('input[name="backupSelect"]:checked');
+    if (!selected) return;
+    var row = selected.closest('tr');
+    var cells = row.querySelectorAll('td');
+    var summary = document.getElementById('restoreSummary');
+    summary.innerHTML =
+      '<div class="change-row"><span class="change-label">Host</span><span class="change-value">' + cells[1].textContent + '</span></div>' +
+      '<div class="change-row"><span class="change-label">Backup Date</span><span class="change-value">' + cells[4].textContent + '</span></div>' +
+      '<div class="change-row"><span class="change-label">Type</span><span class="change-value">' + cells[3].textContent + '</span></div>' +
+      '<div class="change-row"><span class="change-label">Size</span><span class="change-value">' + cells[5].textContent + '</span></div>';
+    document.getElementById('restoreModal').classList.add('open');
+  };
+
+  window.closeRestoreModal = function() {
+    document.getElementById('restoreModal').classList.remove('open');
+  };
+
+  window.confirmRestore = function() {
+    closeRestoreModal();
+    showToast('Restore initiated. The system will restart shortly.', 'info');
+  };
+
+  window.closeDisableModal = function() {
+    document.getElementById('disableModal').classList.remove('open');
+    backupEnabled.checked = true; // Revert toggle
+  };
+
+  window.confirmDisableBackup = function() {
+    document.getElementById('disableModal').classList.remove('open');
+    configFields.style.display = 'none';
+    disabledBanner.style.display = 'flex';
+    enabledLabel.textContent = 'Backup Disabled';
+    showToast('Automatic backup has been disabled.', 'info');
+  };
+
+  // ── Test Connection ─────────────────────────────────
+  window.testConnection = function() {
+    var host = document.getElementById('remoteHost').value;
+    if (!host) {
+      showToast('Please enter a remote host address.', 'error');
+      return;
+    }
+    var btn = document.getElementById('testConnectionBtn');
+    btn.textContent = 'Testing...';
+    btn.disabled = true;
+    setTimeout(function() {
+      btn.textContent = 'Test Connection';
+      btn.disabled = false;
+      showToast('Connection to ' + host + ' successful.', 'success');
+    }, 1500);
+  };
+
+  // ── Reset Form ──────────────────────────────────────
+  window.resetForm = function() {
+    document.getElementById('backupType').value = 'full';
+    scheduleFreq.value = 'daily';
+    document.getElementById('backupTime').value = '02:00';
+    backupsToKeep.value = '5';
+    rotationPolicy.value = 'fifo';
+    remoteEnabled.checked = false;
+    remoteFields.style.display = 'none';
+    weeklyRow.style.display = 'none';
+    monthlyRow.style.display = 'none';
+    gfsOptions.style.display = 'none';
+    backupsToKeep.closest('.form-group').classList.remove('has-error');
+    updateScheduleSummary();
+    showToast('Form reset to defaults.', 'info');
+  };
+
+  // ── Validation Helper ───────────────────────────────
+  function validateRequired(id) {
+    var el = document.getElementById(id);
+    var group = el.closest('.form-group');
+    if (!el.value.trim()) {
+      group.classList.add('has-error');
+      return false;
+    }
+    group.classList.remove('has-error');
+    return true;
+  }
+
+  // ── Toast System ────────────────────────────────────
+  window.showToast = function(message, type) {
+    type = type || 'success';
+    var container = document.getElementById('toastContainer');
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    var icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+    toast.innerHTML = '<span style="font-size:16px;">' + icon + '</span><span>' + message + '</span>';
+    container.appendChild(toast);
+    setTimeout(function() {
+      toast.style.animation = 'slideOut 0.3s ease forwards';
+      setTimeout(function() { toast.remove(); }, 300);
+    }, 3500);
+  };
+
+  // ── Helpers ─────────────────────────────────────────
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  // ── Close modals on overlay click ───────────────────
+  document.querySelectorAll('.modal-overlay').forEach(function(overlay) {
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+
+  // ── Close modals on Escape key ──────────────────────
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.open').forEach(function(m) {
+        m.classList.remove('open');
+        // Revert backup toggle if disable modal was cancelled
+        if (m.id === 'disableModal') backupEnabled.checked = true;
+      });
+    }
+  });
+})();
+</script>
+</body>
+</html>
