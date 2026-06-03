@@ -1,6 +1,6 @@
 ---
 name: poai-work-order
-description: "BLSS Product Owner Work Order — Analyze requirements, decompose into JIRA Epics & Stories with NFRs, ACs, and on-prem constraints for Eaton Brightlayer Software Suite. Use when: requirement analysis, epic breakdown, story decomposition, PI planning, backlog refinement, NFR specification, BLSS feature decomposition, SAFe agile epic writing. For create-jira-stories tasks, load and follow references/create-jira-stories-from-md.prompt.md."
+description: "BLSS Product Owner Work Order — Analyze requirements, decompose into JIRA Epics & Stories with NFRs, ACs, and on-prem constraints for Eaton Brightlayer Software Suite. Use when: requirement analysis, epic breakdown, story decomposition, PI planning, backlog refinement, NFR specification, BLSS feature decomposition, SAFe agile epic writing. For create-jira-stories tasks, load and follow create-jira-stories-from-md.prompt.md."
 argument-hint: "Paste the requirement, Jira ticket, or feature description to analyze..."
 ---
 
